@@ -18,11 +18,14 @@ module TicTac
     else
       begin
         config_file=File.read("#{IPFS_PATH}/config")
-        privkey_ipfs=JSON.load(config_file)["Identity"]["PrivKey"]
+        ipfs_config=JSON.load(config_file)
+        privkey_ipfs=ipfs_config["Identity"]["PrivKey"]
+        pubkey_ipfs=ipfs_config["Identity"]["PeerID"]
         private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
         File.write("#{Tictac_dir}/self.pem",private_key)
         pkey_obj=OpenSSL::PKey::RSA.new(File.read("#{Tictac_dir}/self.pem"))
         File.write("#{Tictac_dir}/self.pub",pkey_obj.public_key.export)
+        File.write("#{Tictac_dir}/self.ipfspub",pubkey_ipfs)
       rescue Exception  => e
         puts "ERROR\tPRIVKEY_IMPORT\t#{e}"
       end

@@ -8,13 +8,14 @@ module TicTac
       @pkey=OpenSSL::PKey::RSA.new(File.read(Private_key))
       @log=[]
       if initial_state == Empty_log
-        require 'pry'
-        binding.pry
         obj={last_sig: nil,last_log: nil, payload: ''}
         @log.push(signed_obj(obj))
       else
         #TODO verification of chain so far
       end
+      
+    end
+    def verify_entry(log_entry)
       
     end
     def new_entry(obj)
@@ -32,7 +33,7 @@ module TicTac
                   signature: signature,
                   signer: File.read(Public_key)
                  })
-      %x(ipfs add -Q <<<  '#{signed_obj}')
+      %x(ipfs add -Q <<<  '#{signed_obj}').chomp
     end
   end
 end
