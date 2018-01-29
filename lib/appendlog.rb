@@ -2,11 +2,13 @@ require 'open3'
 require 'openssl'
 require 'base64'
 require 'json'
-require_relative 'tictac'
+require_relative 'config'
+
 module TicTac
   class Block
     #this class is immutable.
-    attr_accessor :signature,:signer,:prev,:ipfs_addr,:data
+    attr_accessor :signature, :signer, :prev, :ipfs_addr, :data
+
     def initialize(ipfs_addr)
       @ipfs_addr=ipfs_addr
       @block=JSON.parse(%x(ipfs cat #{ipfs_addr}),symbolize_names: true)
@@ -16,9 +18,11 @@ module TicTac
       @signer=@payload[:signer]
       @prev=@payload[:prev]
     end
+
     def append(data)
       TicTac::Block.from_data(data,@ipfs_addr)
     end
+
     def get_chain
       block=self
       chain=[]
@@ -33,26 +37,38 @@ module TicTac
       chain.push(block)
       chain.reverse #so it's from oldest to newest.
     end
-    def self.from_data(data,last_block)
-      payload={ data: data,
-                 signer: Private_key.public_key.export,
-                 prev: last_block
-              }
-      json_payload=JSON.dump(payload)
-      signature=Base64.strict_encode64(Private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
+
+    def self.from_data(data, last_block, private_key: TicTac.cfg.private_key)
+      payload = {
+        data: data,
+        signer: private_key.public_key.export,
+        prev: last_block
+      }
+      json_payload = JSON.dump(payload)
+      signature = Base64.strict_encode64(private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
+
       block={
         signature: signature,
         payload: Base64.strict_encode64(json_payload)
       }
+
       new_block_addr=Open3.popen3("ipfs add -Q") do |i,o,e|
         i.write(JSON.dump(block));i.close;o.read
       end.chomp
-      TicTac::Block.new(new_block_addr)
+      
+      new(new_block_addr)
     end
+
     def signed?
       key=OpenSSL::PKey::RSA.new(@signer)
       digest_algo=OpenSSL::Digest::SHA256.new
       key.verify(digest_algo,@signature, JSON.dump(@payload))
+    end
+
+    private
+
+    def ==(block)
+      block.data == data && block.signer == signer && block.prev == prev
     end
   end
 end
