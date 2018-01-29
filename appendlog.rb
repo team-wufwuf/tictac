@@ -1,3 +1,4 @@
+require 'open3'
 require 'openssl'
 require 'base64'
 require 'json'
@@ -30,8 +31,10 @@ module TicTac
       signed_obj=JSON.dump({payload: Base64.strict_encode64(json_obj),
                   signature: signature,
                   signer: File.read(Public_key)
-                 })
-      %x(ipfs add -Q <<<  '#{signed_obj}').chomp
+                           })
+      Open3.popen3("ipfs add -Q") do | i,o,e|
+        i.write(signed_obj);i.close;o.read
+      end
     end
   end
 end
