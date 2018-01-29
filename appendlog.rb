@@ -22,8 +22,7 @@ module TicTac
       last_payload=JSON.parse(%x(ipfs cat #{@log.last}),symbolize_names: true)
       obj[:last_log]=@log.last
       sobj=signed_obj(obj)
-      @log.push(sobj)
-
+      @log.push(sobj).last
     end
     def signed_obj(obj)
       json_obj=JSON.dump(obj)
