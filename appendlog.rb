@@ -5,56 +5,61 @@ require 'json'
 require_relative 'tictac'
 module TicTac
   class Block
+    #this class is immutable.
+    attr_accessor :signature,:signer,:prev,:ipfs_addr,:data
     def initialize(ipfs_addr)
+      @ipfs_addr=ipfs_addr
       @block=JSON.parse(%x(ipfs cat #{ipfs_addr}),symbolize_names: true)
-      @payload=Base64.decode64(@block[:payload])
       @signature=Base64.decode64(@block[:signature])
-      @signer=@block[:signer]
-      @prev=@block[:prev]
+      @payload=JSON.parse(Base64.decode64(@block[:payload]),symbolize_names: true)
+      @data=@payload[:data]
+      @signer=@payload[:signer]
+      @prev=@payload[:prev]
+    end
+    def append(data)
+      TicTac::Block.from_data(data,@ipfs_addr)
+    end
+    def get_chain
+      block=self
+      chain=[]
+      while block.prev != nil
+        chain.push(block.prev)
+        block=TicTac::Block.new(block.prev)        
+      end
+      chain.push(block.ipfs_addr)
+      chain
+    end
+    def self.from_data(data,last_block)
+      payload={ data: data,
+                 signer: Private_key.public_key.export,
+                 prev: last_block
+              }
+      json_payload=JSON.dump(payload)
+      signature=Base64.strict_encode64(Private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
+      block={
+        signature: signature,
+        payload: Base64.strict_encode64(json_payload)
+      }
+      new_block_addr=Open3.popen3("ipfs add -Q") do |i,o,e|
+        i.write(JSON.dump(block));i.close;o.read
+      end.chomp
+      TicTac::Block.new(new_block_addr)
     end
     def signed?
       key=OpenSSL::PKey::RSA.new(@signer)
       digest_algo=OpenSSL::Digest::SHA256.new
-      key.verify(digest_algo,@signature, @payload)
-    end
-  end
-    
-  class AppendLog
-    def initialize(initial_state=Empty_log)
-      @pkey=OpenSSL::PKey::RSA.new(File.read(Private_key))
-      @log=[]
-      if initial_state == Empty_log
-        obj={prev: nil, payload: ''}
-        @log.push(signed_obj(obj))
-      else
-        #TODO verification of chain so far
-      end
-      
-    end
-    def verify_entry(log_entry)
-      proposed_head=JSON.parse(%x(ipfs cat #{log_entry}),symbolize_names: true)
-      payload=Base64.base64decode(proposed_head['payload'])
-      proposed_head['signature']
-    end
-    def new_entry(obj)
-      last_payload=JSON.parse(%x(ipfs cat #{@log.last}),symbolize_names: true)
-      obj[:prev]=@log.last
-      sobj=signed_obj(obj)
-      @log.push(sobj).last
-    end
-    def signed_obj(obj)
-      json_obj=JSON.dump(obj)
-      signature=Base64.strict_encode64(@pkey.sign(OpenSSL::Digest::SHA256.new,json_obj))
-      signed_obj=JSON.dump({payload: Base64.strict_encode64(json_obj),
-                  signature: signature,
-                  signer: File.read(Public_key)
-                           })
-      Open3.popen3("ipfs add -Q") do | i,o,e|
-        i.write(signed_obj);i.close;o.read
-      end
+      key.verify(digest_algo,@signature, JSON.dump(@payload))
     end
   end
 end
-a=TicTac::AppendLog.new
-print TicTac::Block.new(a.new_entry({"hello":"World"})).signed?
+    
+new_game_request=TicTac::Block.from_data({game:"tic-tac-toe",
+                                            player1: TicTac::Ipfs_public_key,
+                                            player2: 'QmNMvSwDfroSeS7ob2WfU9hd8QKKAK3FFCXernWj9oWuk9' #ben
+                                         },nil)
+turn1=new_game_request.append({action: "forfeit"})
+turn2=turn1.append({action: "seriously"})
+
+print TicTac::Block.new(turn2.ipfs_addr).get_chain
+
   
