@@ -23,6 +23,10 @@ module TicTac
       block=self
       chain=[]
       while block.prev != nil
+        if !block.signed?
+          puts "ERROR\tBAD_SIG #{block.ipfs_addr}"
+          return chain
+        end
         chain.push(block.prev)
         block=TicTac::Block.new(block.prev)        
       end
