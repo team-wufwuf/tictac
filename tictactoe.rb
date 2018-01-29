@@ -4,6 +4,10 @@ require_relative 'appendlog'
 module TicTac
   class TicTacToeBoard
     #reference implementation of a simple game.
+    #ways to form an invalid game:
+    #take two turns in a row
+    #play in a marked space.
+    #fail to accept defeat.
     def initialize(ipfs_addr)
       @chain=Block.new(ipfs_addr).get_chain
     end

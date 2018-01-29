@@ -5,6 +5,7 @@ require 'json'
 require_relative 'tictac'
 module TicTac
   class Block
+    @@config=DefaultConfig
     #this class is immutable.
     attr_accessor :signature,:signer,:prev,:ipfs_addr,:data
     def initialize(ipfs_addr)
