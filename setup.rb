@@ -27,7 +27,7 @@ module TicTac
         pkey_obj=OpenSSL::PKey::RSA.new(File.read("#{Tictac_dir}/self.pem"))
         File.write("#{Tictac_dir}/self.pub",pkey_obj.public_key.export)
         pkey_openssl_ipfsaddr=Open3.popen3("ipfs add -Q") do |i,o,e|
-          i.write(pkey_obj.public_key.export);i.close;o.read
+          i.write("#{pubkey_ipfs}\n"+pkey_obj.public_key.export);i.close;o.read
         end.chomp
         File.write("#{Tictac_dir}/pubkey.ipfslink",pkey_openssl_ipfsaddr)
         File.write("#{Tictac_dir}/self.ipfspub",pubkey_ipfs)

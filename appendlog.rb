@@ -5,7 +5,6 @@ require 'json'
 require_relative 'tictac'
 module TicTac
   class Block
-    @@config=DefaultConfig
     #this class is immutable.
     attr_accessor :signature,:signer,:prev,:ipfs_addr,:data
     def initialize(ipfs_addr)
@@ -57,14 +56,27 @@ module TicTac
     end
   end
 end
-    
-new_game_request=TicTac::Block.from_data({game:"tic-tac-toe",
-                                            player1: TicTac::Ipfs_public_key,
-                                            player2: 'QmNMvSwDfroSeS7ob2WfU9hd8QKKAK3FFCXernWj9oWuk9' #ben
-                                         },nil)
-turn1=new_game_request.append({action: "forfeit"})
-turn2=turn1.append({action: "seriously"})
 
-print TicTac::Block.new(turn2.ipfs_addr).get_chain.collect(&:data)
+if __FILE__ == $0
+  Just_print_data=(ARGV[0] == '--print-data')
+  Init=(ARGV[0] == '--init') #create a new game with opponent specified by ARGV[1]
+  data=ARGV[0] unless Init
+  game=ARGV[1]
+  if Init
+    game=TicTac::Block.from_data({game:"tic-tac-toe",
+                                  player1: TicTac::Ipfs_public_key,
+                                  player2: ARGV[1] #ben
+                                 },nil).ipfs_addr
+  end
+  game_chain=TicTac::Block.new(game).get_chain
+  if Just_print_data
+    game_chain.each do |block|
+      puts block.data
+    end
+  else
+    puts game_chain.last.append(data).ipfs_addr
+  end
+end
+
 
   
