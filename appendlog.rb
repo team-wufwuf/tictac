@@ -8,7 +8,7 @@ module TicTac
       @pkey=OpenSSL::PKey::RSA.new(File.read(Private_key))
       @log=[]
       if initial_state == Empty_log
-        obj={last_sig: nil,last_log: nil, payload: ''}
+        obj={last_log: nil, payload: ''}
         @log.push(signed_obj(obj))
       else
         #TODO verification of chain so far
@@ -20,7 +20,6 @@ module TicTac
     end
     def new_entry(obj)
       last_payload=JSON.parse(%x(ipfs cat #{@log.last}),symbolize_names: true)
-      obj[:last_sig]=last_payload[:signature]
       obj[:last_log]=@log.last
       sobj=signed_obj(obj)
       @log.push(sobj)
