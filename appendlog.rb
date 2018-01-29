@@ -27,11 +27,11 @@ module TicTac
           puts "ERROR\tBAD_SIG #{block.ipfs_addr}"
           return chain
         end
-        chain.push(block.prev)
+        chain.push(block)
         block=TicTac::Block.new(block.prev)        
       end
-      chain.push(block.ipfs_addr)
-      chain
+      chain.push(block)
+      chain.reverse #so that the oldest entry is first.
     end
     def self.from_data(data,last_block)
       payload={ data: data,
@@ -64,6 +64,6 @@ new_game_request=TicTac::Block.from_data({game:"tic-tac-toe",
 turn1=new_game_request.append({action: "forfeit"})
 turn2=turn1.append({action: "seriously"})
 
-print TicTac::Block.new(turn2.ipfs_addr).get_chain
+print TicTac::Block.new(turn2.ipfs_addr).get_chain.collect(&:data)
 
   
