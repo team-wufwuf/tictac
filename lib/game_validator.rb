@@ -14,18 +14,18 @@ module TicTac
           turn_validator.(state, turn)
         end
       end
-    end
 
-    def turn_validator
-      self.class.turn_validator
-    end
-
-    class << self
-      def validate_turn(&block)
-        @turn_validator = block
+      def turn_validator
+        self.class.turn_validator
       end
 
-      attr_reader :turn_validator
+      class << self
+        def validate_turn(&block)
+          @turn_validator = block
+        end
+
+        attr_reader :turn_validator
+      end
     end
   end
 end
