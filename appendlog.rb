@@ -31,7 +31,7 @@ module TicTac
         block=TicTac::Block.new(block.prev)        
       end
       chain.push(block)
-      chain.reverse #so that the oldest entry is first.
+      chain.reverse #so it's from oldest to newest.
     end
     def self.from_data(data,last_block)
       payload={ data: data,
