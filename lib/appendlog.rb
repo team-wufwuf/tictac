@@ -65,8 +65,6 @@ module TicTac
       key.verify(digest_algo,@signature, JSON.dump(@payload))
     end
 
-    private
-
     def ==(block)
       block.data == data && block.signer == signer && block.prev == prev
     end
