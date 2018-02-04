@@ -4,13 +4,13 @@ module TicTac
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
     class TicTacGame
       attr_accessor :crosses,:circles,:board_state,:board_status
-      def initialize(player1,player2)
+      def new_game(identity,player2) 
         @board_state=[]
         3.times {@board_state.append([])}
-        
+        {player1: identity.public_key_link
       end
     end
-     
+
     TicTacGame = Struct.new(:crosses, :circles, :board_state, :board_status) do
       def player_value(player)
         if crosses = player

@@ -1,3 +1,4 @@
+require 'optparse'
 require 'open3'
 require 'openssl'
 require 'base64'
@@ -29,8 +30,8 @@ module TicTac
       @prev=@payload[:prev]
     end
 
-    def append(data)
-      TicTac::Block.from_data(data,@ipfs_addr)
+    def append(data,private_key)
+      TicTac::Block.from_data(data,@ipfs_addr,private_key)
     end
 
     def get_chain
@@ -48,14 +49,14 @@ module TicTac
       chain.reverse #so it's from oldest to newest.
     end
 
-    def self.from_data(data, last_block, private_key: TicTac.cfg.private_key,public_key: TicTac.cfg.public_key_link)
+    def self.from_data(data, last_block,identity)
       payload = {
         data: data,
-        signer: public_key,#private_key.public_key.export,
+        signer: identity.public_key_link,
         prev: last_block
       }
       json_payload = JSON.dump(payload)
-      signature = Base64.strict_encode64(private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
+      signature = Base64.strict_encode64(identity.private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
 
       block={
         signature: signature,
@@ -89,35 +90,39 @@ module TicTac
 end
 
 if __FILE__ == $0
-
-  Just_print_data=(ARGV[0] == '--print-data')
-  Init=(ARGV[0] == '--init') #create a new game with opponent specified by ARGV[1]
-  data=ARGV[0] unless Init
-  game=ARGV[1] ? ARGV[1] : 'QmQao2dp2fFztvCNFveDaY8nHzYnnJAZQwAExPvq2D4gNg'
+  o={keyname: "self",data: nil, chain: nil}
+  parser=OptionParser.new do |opts|
+    opts.banner = "Usage: appendlog.rb -n keyname -d data -c chain"
+    opts.on('-n', '--keyname name', 'Name')  {|x| o[:name] = x }
+    opts.on('-d', '--data data', 'Data') { |x| o[:data] = x }
+    opts.on('-c', '--chain chain', 'Chain') { |x| o[:chain] = x }
+    opts.on('-p','--print-data') {|x| o[:print_data]=x }
+    opts.on('-i','--init') {|x| o[:init]=x }
+    opts.on('-o','--opponent opponent') {|x| o[:opponent]=x }
+  end
+  parser.parse!
+  if ((o[:init] && ( o[:print_data] || o[:chain] )) || #init is incompatible with print_data and chain
+      (o[:init] && !o[:opponent]))                #init requires opponent (as an ipfs pubkey link)
+    puts "no good"
+    exit(1)
+  end
+  if o[:print_data]
+    chain=TicTac::Block.new(o[:chain]).get_chain
+    chain.each do |b| puts b.data end
+  end
   id=TicTac::Identity.new
-
-  if Init
-    obj=TicTac.resolve_public_key_link(ARGV[1])
-    if !obj[:public_key]
-      puts "invalid player spec"
-      exit 1
-    end
+  if o[:init]
     game=TicTac::Block.from_data({game:"tic-tac-toe",
-                                  player1: TicTac.cfg.public_key_link,
-                                  player2: ARGV[1] ? ARGV[1] : "QmSunnRdqH2M9Yco9tKDiwQwpUd8hJnCpPjPkW9wENcSAo", #ben
-                                 },nil).ipfs_addr
+                                  player1: id.public_key_link,
+                                  player2: o[:opponent],
+                                 },nil,id).ipfs_addr
     puts game
     exit 0
   end
-  game_chain=TicTac::Block.new(game).get_chain
-  if Just_print_data
-    game_chain.each do |block|
-      puts block.data
-    end
-  else
-    puts game_chain.last.append(data).ipfs_addr
+  if o[:chain] && o[:data]
+    chain=TicTac::Block.new(o[:chain]).get_chain
+    chain.last.append(data,id).ipfs_addr
   end
 end
 
 
-  

@@ -70,9 +70,31 @@ module TicTac
     def pub_path
       tictac_join("#{@keyname}.pub")
     end
-
+    def ipfs_path
+      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
+      "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}"
+    end
     def private_path
       tictac_join("#{@keyname}.pem")
+    end
+    def tictac_dir
+      @tictac_dir ||= File.join(ipfs_path, 'tictac')
+    end
+
+    def public_key
+      @public_key ||= File.read(File.join(tictac_dir, 'self.ipfspub'))
+    end
+
+    def public_key_link
+      @public_key_link ||= File.read(File.join(tictac_dir, 'self.ipfslink'))
+    end
+
+    def private_key
+      @private_key ||= OpenSSL::PKey::RSA.new(File.read(File.join(tictac_dir, 'self.pem')))
+    end
+
+    def empty_log
+      "QmW2iRGLDBBTa4Rorfoj3rZ6bUfSfXRtPeJavjSUKs5CKN"
     end
 
     def validate
