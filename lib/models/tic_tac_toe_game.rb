@@ -6,31 +6,46 @@ module TicTac
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
     attr_accessor :game_status, :game_state
     class TicTacGame
-      def initialize(game_state,game_status)
+      def self.assert_valid_new_game(game_status,game_state)
+        if !game_status == "NEW" ||
+           !game_state.class == Array ||
+           !game_state.length == 3 ||
+           !game_state.all? {|r| r.length == 3 } ||
+           !game_state.all? {|r| r.all? { |x| x == 0 or x == 1 or x == nil } }
+          raise GameModelError.new("INVALID_NEW_GAME")
+        end
+      end
+      def initialize(game_status,game_state)
+        TicTacGame.assert_valid_new_game(game_status,game_state)
         @game_status,@game_state=game_status,game_state
       end
       def self.name
         "tic-tac-toe"
       end
-      def move(player,x,y)
+      
+      def move(player,move)
+        x,y=move[:x],move[:y]
         if x > 2 or y > 2 or @game_state[x][y] or (player != 1 && player != 2)
           GameModelError.new("INVALID_MOVE")
         else
           @game_state[x][y]=player
         end
       end
-      def marshal
-        {game_status: @game_status,game_state: @game_state}
+      def game_status
+        @game_status
+      end
+      def game_state
+        @game_state
       end
       def self.new_game
         game_state=[]
-        3.times {game_state.push([])}
-        ttg=TicTacGame.new(game_state,:new)
+        3.times {|| game_state.push([nil,nil,nil]) }
+        ttg=TicTacGame.new("NEW",game_state)
         return ttg
       end
     end
+    end
   end
-end
 if __FILE__ == $0
   puts "yippee"
 end
