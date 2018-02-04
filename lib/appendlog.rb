@@ -8,6 +8,8 @@ require_relative 'config'
 require_relative 'identity'
 
 module TicTac
+  class SSLError < StandardError
+  end
   def self.resolve_public_key_link(ipfs_link)
     pubkey_object=%x(ipfs cat  #{ipfs_link})
     obj_lines=pubkey_object.split("\n")
@@ -31,8 +33,8 @@ module TicTac
       @prev=@payload[:prev]
     end
 
-    def append(data,private_key)
-      TicTac::Block.from_data(data,@ipfs_addr,private_key)
+    def append(identity,data)
+      TicTac::Block.from_data(identity,@ipfs_addr,data)
     end
 
     def get_chain
@@ -40,7 +42,7 @@ module TicTac
       chain=[]
       while block.prev != nil
         if !block.signed?
-          puts "ERROR\tBAD_SIG #{block.ipfs_addr}"
+          raise SSLError.new("BAD SIGNATURE")
           return chain
         end
         chain.push(block)
@@ -50,14 +52,14 @@ module TicTac
       chain.reverse #so it's from oldest to newest.
     end
 
-    def self.from_data(data, last_block,identity)
+    def self.from_data(id,last_block,data)
       payload = {
         data: data,
-        signer: identity.public_key_link,
+        signer: id.public_key_link,
         prev: last_block
       }
       json_payload = JSON.dump(payload)
-      signature = Base64.strict_encode64(identity.private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
+      signature = Base64.strict_encode64(id.private_key.sign(OpenSSL::Digest::SHA256.new,json_payload))
 
       block={
         signature: signature,
@@ -119,7 +121,7 @@ if __FILE__ == $0
   if o[:chain] && o[:data]
     id=TicTac::Identity.new
     chain=TicTac::Block.new(o[:chain]).get_chain
-    chain.last.append(data,id).ipfs_addr
+    chain.last.append(id,data).ipfs_addr
   end
 end
 
