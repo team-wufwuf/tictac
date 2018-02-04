@@ -1,38 +1,42 @@
+# coding: utf-8
 require 'fileutils'
 require 'openssl'
 
 module TicTac
   IPFS_PATH=ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : File.absolute_path("#{ENV['HOME']}/.ipfs")
 
-  class Config 
-    def initialize(ipfs_path)
-      @ipfs_path = ipfs_path
+  class Config
+    def setup
+      private_key = Identity.import_or_create_privkey_from_keystore("self")
     end
-
     attr_reader :ipfs_path
+    def ipfspub_path
+      tictac_join("#{@keyname}.ipfspub")
+    end
 
+    def ipfslink_path
+      tictac_join("#{@keyname}.ipfslink")
+    end
     def tictac_dir
-      @tictac_dir ||= File.join(ipfs_path, 'tictac')
+      return "#{ipfs_path}/tictac"
     end
-
-    def public_key
-      @public_key ||= File.read(File.join(tictac_dir, 'self.ipfspub'))
+    def pub_path
+      tictac_join("#{@keyname}.pub")
     end
-
-    def public_key_link
-      @public_key_link ||= File.read(File.join(tictac_dir, 'self.ipfslink'))
+    def ipfs_path
+      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
+      "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}"
     end
-
-    def private_key
-      @private_key ||= OpenSSL::PKey::RSA.new(File.read(File.join(tictac_dir, 'self.pem')))
+    def tictac_join(args)
+      File.join(tictac_dir, *args)
     end
-
-    def empty_log
-      "QmW2iRGLDBBTa4Rorfoj3rZ6bUfSfXRtPeJavjSUKs5CKN"
+    def private_path
+      tictac_join("#{@keyname}.pem")
     end
   end
-
   def self.cfg
-    Config.new(ENV['IPFS_PATH'] || File.absolute_path(File.join(ENV['HOME'], '.ipfs')))
+    Config.new
   end
+
 end
+
