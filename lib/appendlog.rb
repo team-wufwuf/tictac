@@ -80,7 +80,6 @@ module TicTac
       else
         pubkey=TicTac.resolve_public_key_link(@signer)[:public_key]
       end
-      puts pubkey.inspect
       key=OpenSSL::PKey::RSA.new(pubkey)
       digest_algo=OpenSSL::Digest::SHA256.new
       key.verify(digest_algo,@signature, JSON.dump(@payload))
@@ -112,7 +111,6 @@ if __FILE__ == $0
   if o[:print_data]
     chain=TicTac::Block.new(o[:chain]).get_chain
     chain.each do |b| puts b.data end
-
   end
   if o[:init]
     puts game

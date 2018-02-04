@@ -36,10 +36,10 @@ module TicTac
       end
       def move(player,move)
         x,y=move[:x],move[:y]
-        if x > 2 or y > 2 or @game_state[x][y] or (player != 1 && player != 2)
-          GameModelError.new("INVALID_MOVE")
+        if x > 2 or y > 2 or @game_state[x][y] or (player != 0 && player != 1)
+          raise GameModelError.new("INVALID_MOVE")
         else
-          @game_state[x][y]=player
+          @game_state[x][y]=player.to_i
         end
       end
       def game_status
