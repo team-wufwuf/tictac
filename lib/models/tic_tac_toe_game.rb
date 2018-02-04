@@ -11,7 +11,7 @@ module TicTac
            !game_state.class == Array ||
            !game_state.length == 3 ||
            !game_state.all? {|r| r.length == 3 } ||
-           !game_state.all? {|r| r.all? { |x| x == 0 or x == 1 or x == nil } }
+           !game_state.all? {|r| r.all? { |x| x == 1 or x == 0 or x == nil } }
           raise GameModelError.new("INVALID_NEW_GAME")
         end
       end
@@ -22,7 +22,18 @@ module TicTac
       def self.name
         "tic-tac-toe"
       end
-      
+      def pretty_print
+        mapping={0 => "x",1 => "o",nil => " "}
+        x=@game_state.collect {|r| r.collect { |x| mapping[x] } }
+        
+        """
+         _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
+        -------
+        """
+      end
       def move(player,move)
         x,y=move[:x],move[:y]
         if x > 2 or y > 2 or @game_state[x][y] or (player != 1 && player != 2)
