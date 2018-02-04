@@ -1,3 +1,4 @@
+
 require 'optparse'
 require 'open3'
 require 'openssl'
@@ -109,17 +110,14 @@ if __FILE__ == $0
   if o[:print_data]
     chain=TicTac::Block.new(o[:chain]).get_chain
     chain.each do |b| puts b.data end
+
   end
-  id=TicTac::Identity.new
   if o[:init]
-    game=TicTac::Block.from_data({game:"tic-tac-toe",
-                                  player1: id.public_key_link,
-                                  player2: o[:opponent],
-                                 },nil,id).ipfs_addr
     puts game
     exit 0
   end
   if o[:chain] && o[:data]
+    id=TicTac::Identity.new
     chain=TicTac::Block.new(o[:chain]).get_chain
     chain.last.append(data,id).ipfs_addr
   end

@@ -6,16 +6,23 @@ require 'openssl'
 require_relative 'config'
 
 module TicTac
-
   class Identity
-    attr_reader :cfg
-
-    def initialize(cfg=TicTac.cfg)
+    attr_accessor :cfg
+    def initialize(keyname,cfg=::TicTac.cfg)
       @cfg = cfg
+      setup(keyname)
+    end
+    def self.import_or_create_privkey_from_keystore(name="self")
+      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
+      privkey_ipfs_path = "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}/keystore/#{name}"
+      if !File.exist?(privkey_ipfs_path)
+        result=%x(ipfs key gen -t=rsa -s=4096 #{name})
+      end
+      privkey_ipfs=Base64.strict_encode64(File.read(privkey_ipfs_path))
+      private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
     end
 
     def setup(keyname)
-      validate
       @keyname=keyname
       if !File.directory?(cfg.tictac_dir)
         puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
@@ -27,11 +34,14 @@ module TicTac
       config_file = File.read(File.join(cfg.ipfs_path, 'config'))
       ipfs_config = JSON.load(config_file)
       pubkey_ipfs  = ipfs_config["Identity"]["PeerID"]
-
-      private_key = import_or_create_privkey_from_keystore(keyname)
+      if keyname == "self"
+        key64=ipfs_config["Identity"]["PrivKey"]
+        private_key  = %x(echo #{key64} | ipfs_keys_export)
+      else
+        private_key = Identity.import_or_create_privkey_from_keystore(keyname)
+      end
       File.write(private_path, private_key)
-
-      pkey_obj = OpenSSL::PKey::RSA.new(File.read(private_path))
+      pkey_obj = OpenSSL::PKey::RSA.new(File.read(cfg.private_path))
 
       File.write(pub_path, pkey_obj.public_key.export)
 
@@ -40,45 +50,28 @@ module TicTac
         i.close
         o.read
       end.chomp
-
       File.write(ipfslink_path, pkey_openssl_ipfsaddr)
       File.write(ipfspub_path, pubkey_ipfs)
       puts "IMPORTED\t#{keyname}"
+      self
     end
-
-    def import_or_create_privkey_from_keystore(name="self")
-      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
-      privkey_ipfs_path = "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}/keystore/#{name}"
-      if !File.exist?(privkey_ipfs_path)
-        result=%x(ipfs key gen -t=rsa -s=4096 #{name})
-      end
-      privkey_ipfs=Base64.strict_encode64(File.read(privkey_ipfs_path))
-      private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
-    end
-    def tictac_join(args)
-      File.join(cfg.tictac_dir, *args)
+    def private_path
+      cfg.tictac_join("#{@keyname}.pem")
     end
 
     def ipfspub_path
-      tictac_join("#{@keyname}.ipfspub")
+      cfg.tictac_join("#{@keyname}.ipfspub")
     end
 
     def ipfslink_path
-      tictac_join("#{@keyname}.ipfslink")
+      cfg.tictac_join("#{@keyname}.ipfslink")
+    end
+    def pub_path
+      cfg.tictac_join("#{@keyname}.pub")
     end
 
-    def pub_path
-      tictac_join("#{@keyname}.pub")
-    end
-    def ipfs_path
-      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
-      "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}"
-    end
-    def private_path
-      tictac_join("#{@keyname}.pem")
-    end
     def tictac_dir
-      @tictac_dir ||= File.join(ipfs_path, 'tictac')
+      @tictac_dir ||= File.join(cfg.ipfs_path, 'tictac')
     end
 
     def public_key
@@ -97,20 +90,8 @@ module TicTac
       "QmW2iRGLDBBTa4Rorfoj3rZ6bUfSfXRtPeJavjSUKs5CKN"
     end
 
-    def validate
-      if !File.directory?(cfg.ipfs_path)
-        raise IpfsPathError.new("ERROR\tPATH_DNE\t\t#{cfg.ipfs_path}")
-      end
-
-      [ipfspub_path, ipfslink_path, pub_path, private_path].each do |path|
-        if File.exists?(path)
-          raise IpfsPathError.new("ERROR\tFILE_EXISTS\t\t#{path}")
-        end
-      end
-    end
+  end
 
     class IpfsPathError < StandardError
     end
-
-  end
 end
