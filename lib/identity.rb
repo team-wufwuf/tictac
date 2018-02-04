@@ -1,3 +1,4 @@
+require 'base64'
 require 'open3'
 require 'json'
 require 'openssl'
@@ -13,9 +14,9 @@ module TicTac
       @cfg = cfg
     end
 
-    def setup
+    def setup(keyname)
       validate
-
+      @keyname=keyname
       if !File.directory?(cfg.tictac_dir)
         puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
         FileUtils.mkdir_p(cfg.tictac_dir)
@@ -25,11 +26,9 @@ module TicTac
 
       config_file = File.read(File.join(cfg.ipfs_path, 'config'))
       ipfs_config = JSON.load(config_file)
-
-      privkey_ipfs = ipfs_config["Identity"]["PrivKey"]
       pubkey_ipfs  = ipfs_config["Identity"]["PeerID"]
 
-      private_key = %x(echo #{privkey_ipfs} | ipfs_keys_export)
+      private_key = import_or_create_privkey_from_keystore(keyname)
       File.write(private_path, private_key)
 
       pkey_obj = OpenSSL::PKey::RSA.new(File.read(private_path))
@@ -44,27 +43,36 @@ module TicTac
 
       File.write(ipfslink_path, pkey_openssl_ipfsaddr)
       File.write(ipfspub_path, pubkey_ipfs)
-      puts "IMPORTED\tself"
+      puts "IMPORTED\t#{keyname}"
     end
 
+    def import_or_create_privkey_from_keystore(name="self")
+      default_ipfs_dir="#{ENV['HOME']}/.ipfs"
+      privkey_ipfs_path = "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}/keystore/#{name}"
+      if !File.exist?(privkey_ipfs_path)
+        result=%x(ipfs key gen -t=rsa -s=4096 #{name})
+      end
+      privkey_ipfs=Base64.strict_encode64(File.read(privkey_ipfs_path))
+      private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
+    end
     def tictac_join(args)
       File.join(cfg.tictac_dir, *args)
     end
 
     def ipfspub_path
-      tictac_join('self.ipfspub')
+      tictac_join("#{@keyname}.ipfspub")
     end
 
     def ipfslink_path
-      tictac_join('self.ipfslink')
+      tictac_join("#{@keyname}.ipfslink")
     end
 
     def pub_path
-      tictac_join('self.pub')
+      tictac_join("#{@keyname}.pub")
     end
 
     def private_path
-      tictac_join('self.pem')
+      tictac_join("#{@keyname}.pem")
     end
 
     def validate

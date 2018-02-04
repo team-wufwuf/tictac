@@ -1,7 +1,7 @@
 require_relative 'lib/identity'
 
 begin
-  TicTac::Identity.new.setup
+  TicTac::Identity.new.setup(ARGV[0])
 rescue StandardError => e
   puts e.message
   e.backtrace.each do |bt|
