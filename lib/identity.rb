@@ -56,7 +56,7 @@ module TicTac
     end
 
     def ipfslink_path
-      tictac_join('pubkey.ipfslink')
+      tictac_join('self.ipfslink')
     end
 
     def pub_path

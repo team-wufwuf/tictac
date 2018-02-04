@@ -3,12 +3,22 @@ require 'openssl'
 require 'base64'
 require 'json'
 require_relative 'config'
+require_relative 'identity'
 
 module TicTac
+  def self.resolve_public_key_link(ipfs_link)
+    pubkey_object=%x(ipfs cat  #{ipfs_link})
+    obj_lines=pubkey_object.split("\n")
+    if obj_lines.first =~ /ipns/
+      authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
+    end
+    pubkey=obj_lines.join("\n")
+    return {public_key: pubkey.empty? ? nil : pubkey,authority_link: authority_link}
+  end
+
   class Block
     #this class is immutable.
     attr_accessor :signature, :signer, :prev, :ipfs_addr, :data
-
     def initialize(ipfs_addr)
       @ipfs_addr=ipfs_addr
       @block=JSON.parse(%x(ipfs cat #{ipfs_addr}),symbolize_names: true)
@@ -38,10 +48,10 @@ module TicTac
       chain.reverse #so it's from oldest to newest.
     end
 
-    def self.from_data(data, last_block, private_key: TicTac.cfg.private_key)
+    def self.from_data(data, last_block, private_key: TicTac.cfg.private_key,public_key: TicTac.cfg.public_key_link)
       payload = {
         data: data,
-        signer: private_key.public_key.export,
+        signer: public_key,#private_key.public_key.export,
         prev: last_block
       }
       json_payload = JSON.dump(payload)
@@ -60,7 +70,14 @@ module TicTac
     end
 
     def signed?
-      key=OpenSSL::PKey::RSA.new(@signer)
+      pubkey=nil
+      if (@signer =~ /PUBLIC KEY/)
+        pubkey=@signer
+      else
+        pubkey=TicTac.resolve_public_key_link(@signer)[:public_key]
+      end
+      puts pubkey.inspect
+      key=OpenSSL::PKey::RSA.new(pubkey)
       digest_algo=OpenSSL::Digest::SHA256.new
       key.verify(digest_algo,@signature, JSON.dump(@payload))
     end
@@ -72,15 +89,25 @@ module TicTac
 end
 
 if __FILE__ == $0
+
   Just_print_data=(ARGV[0] == '--print-data')
   Init=(ARGV[0] == '--init') #create a new game with opponent specified by ARGV[1]
   data=ARGV[0] unless Init
-  game=ARGV[1]
+  game=ARGV[1] ? ARGV[1] : 'QmQao2dp2fFztvCNFveDaY8nHzYnnJAZQwAExPvq2D4gNg'
+  id=TicTac::Identity.new
+
   if Init
+    obj=TicTac.resolve_public_key_link(ARGV[1])
+    if !obj[:public_key]
+      puts "invalid player spec"
+      exit 1
+    end
     game=TicTac::Block.from_data({game:"tic-tac-toe",
-                                  player1: TicTac::Ipfs_public_key,
-                                  player2: ARGV[1] #ben
+                                  player1: TicTac.cfg.public_key_link,
+                                  player2: ARGV[1] ? ARGV[1] : "QmSunnRdqH2M9Yco9tKDiwQwpUd8hJnCpPjPkW9wENcSAo", #ben
                                  },nil).ipfs_addr
+    puts game
+    exit 0
   end
   game_chain=TicTac::Block.new(game).get_chain
   if Just_print_data

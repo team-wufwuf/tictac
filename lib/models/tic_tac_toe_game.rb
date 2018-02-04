@@ -2,6 +2,15 @@ module TicTac
   module Models
     # board state nxn array of integers. 0 neutral. 1 crosses. -1 circles.
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
+    class TicTacGame
+      attr_accessor :crosses,:circles,:board_state,:board_status
+      def initialize(player1,player2)
+        @board_state=[]
+        3.times {@board_state.append([])}
+        
+      end
+    end
+     
     TicTacGame = Struct.new(:crosses, :circles, :board_state, :board_status) do
       def player_value(player)
         if crosses = player
@@ -27,8 +36,12 @@ module TicTac
 
 
       def check_board_state
+        
         # check for state change to victory or draw.
       end
     end
   end
+end
+if __FILE__ == $0
+  puts "yippee"
 end
