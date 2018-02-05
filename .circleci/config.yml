@@ -1,0 +1,8 @@
+version: 2
+jobs:
+  build: machine
+  steps:
+    - checkout
+    - run:
+      name: 'Run unit tests'
+      command: bundle exec rspec
