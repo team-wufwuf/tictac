@@ -17,7 +17,7 @@ module TicTac
         @signer=@initblock.signer
         @rules=@initblock.data
         @players=@rules[:players]
-        @game=Games[@rules[:game]].new(@rules[:game_status],@rules[:game_state])
+        @game=Games[@rules[:game]].new(@rules[:game_state])
         if !@rules[:players].include?(@signer) || !@rules[:players][0] || !@rules[:players][1]
           raise GameError.new("INVALID_PLAYERS")
         end
@@ -31,23 +31,24 @@ module TicTac
       end
       # user: TicTac::Repos::User
       def self.create(id,opponent,game_class)
-        @game=game_class.new_game
+        @game=game_class.new
         chain=TicTac::Block.from_data(id,nil,{game: game_class.name,
                                               players:[opponent,id.public_key_link],
-                                              game_state: @game.marshal,
+                                              state: @game.state
                                              }).ipfs_addr
         return Game.new(chain)
       end
       def get_player_index(ipfs_link)
         idx=@players.index(ipfs_link)
         if !idx
-          GameError("INVALID_PLAYER")
+          raise GameError.new("INVALID_PLAYER")
         end
         idx
       end
+
       def process_move(player_key,move)
         player=get_player_index(player_key)
-        @game.move(player,move)
+        @game=@game.move(player,move)
       end
       def move(id,move)
         process_move(id.public_key_link,move)
@@ -67,25 +68,31 @@ if __FILE__ == $0
     opts.on('-c', '--game-class', 'Only Tic Tac Toe works right now!')  {|x| o[:game_class] = games[x] }
     opts.on('-g', '--game game', 'link to the head of the game you wanna make a move on')  {|x| o[:game] = x }
     opts.on('-i', '--identity identity', 'ipfs name of the key that represents your player')  {|x| o[:identity] = x }
-    opts.on('-m','--move move','Specified like 1,2') do |x|
-      c=x.split(",")
-      o[:move] = {x: c[0].to_i, y: c[1].to_i }
+    opts.on('-m','--move move','Specified like 1,2 or "accept" for pending') do |x|
+      if x == "accept"
+        o[:move]={state: :accepted}
+      else
+        c=x.split(",")
+        o[:move] = {x: c[0].to_i, y: c[1].to_i }
+      end
     end
     opts.on('-o','--opponent opponent') {|x| o[:opponent]=x }
-    opts.on('-i','--identity') {|x| o[:identity]=x }
+    opts.on('-i','--identity identity') {|x| o[:identity]=x }
   end
   parser.parse!
   puts o.inspect
   id=TicTac::Identity.new(o[:identity])
+  
   if o[:opponent]
     game= TicTac::Repos::Game.create(id,o[:opponent],o[:game_class])
     puts game.pretty_print
     puts game.ipfs_addr
   elsif o[:move] && o[:game]
     game=TicTac::Repos::Game.new(o[:game])
+    new_game=nil
     new_game=game.move(id,o[:move])
     puts new_game.pretty_print
-    puts game.chain.last.ipfs_addr
+    puts new_game.ipfs_addr
   elsif o[:game]
     game=TicTac::Repos::Game.new(o[:game])
     puts game.pretty_print

@@ -35,29 +35,31 @@ module TicTac
     # board state nxn array of integers. 0 neutral. 1 crosses. -1 circles.
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
     class TicTacGame
-
+      attr_accessor :state
       def initialize(board=nil, current_player=1, state=:pending)
         @board = board || EMPTY_BOARD
         @current_player = current_player
         @state=state
       end
-
       attr_reader :board, :state, :current_player
-
+      def move(player,move)
+        input_state=move[:state].to_sym unless !move[:state]
+        if input_state == :accepted
+          accept_game(player)
+        else
+          play(player,move[:x],move[:y])
+        end
+      end
       def accept_game(player)
-        raise GameError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
-        raise GameError.new('NOT_PENDING') if state != :pending
+        raise GameModelError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
+        raise GameModelError.new('NOT_PENDING') if state != :pending
 
         TicTacGame.new(board, player, :accepted)
       end
-
       def play(player, posx, posy)
         validate_move(player, posx, posy)
-
         new_board = @board.clone.tap { |b| b[posx][posy] = player }
-
         state = get_state(new_board)
-
         TicTacGame.new(new_board, player, state)
       end
 
@@ -83,9 +85,11 @@ module TicTac
         return :draw if draw
         :playing
       end
-
-      def validate_move(player, posx, posy)
-        if x > 2 || y > 2 || x < 0 || y < 0 || @game_state[x][y] != 0 || (player == current_player)
+      
+      def validate_move(player, x, y)
+        require 'pry'
+        binding.pry
+        if x > 2 || y > 2 || x < 0 || y < 0 || @board[x][y] != 0 || (player == current_player)
           raise GameModelError.new("INVALID_MOVE")
         end
       end
@@ -95,13 +99,17 @@ module TicTac
       end
 
       def pretty_print
-        x = @board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
+        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
         """
-        _______
-        |#{x.map{|y| y.join('|')}.join('|\n')}|
+        #{@state}
+        _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
         -------
         """
       end
+      
     end
   end
 end

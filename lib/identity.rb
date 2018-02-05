@@ -41,7 +41,7 @@ module TicTac
         private_key = Identity.import_or_create_privkey_from_keystore(keyname)
       end
       File.write(private_path, private_key)
-      pkey_obj = OpenSSL::PKey::RSA.new(File.read(cfg.private_path))
+      pkey_obj = OpenSSL::PKey::RSA.new(private_key) #(File.read(cfg.private_path))
 
       File.write(pub_path, pkey_obj.public_key.export)
 
@@ -75,15 +75,15 @@ module TicTac
     end
 
     def public_key
-      @public_key ||= File.read(File.join(tictac_dir, 'self.ipfspub'))
+      @public_key ||= File.read(File.join(tictac_dir, "#{@keyname}.ipfspub"))
     end
 
     def public_key_link
-      @public_key_link ||= File.read(File.join(tictac_dir, 'self.ipfslink'))
+      @public_key_link ||= File.read(File.join(tictac_dir, "#{@keyname}.ipfslink"))
     end
 
     def private_key
-      @private_key ||= OpenSSL::PKey::RSA.new(File.read(File.join(tictac_dir, 'self.pem')))
+      @private_key ||= OpenSSL::PKey::RSA.new(File.read(File.join(tictac_dir, "#{@keyname}.pem")))
     end
 
     def empty_log
