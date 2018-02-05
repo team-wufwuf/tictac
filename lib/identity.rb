@@ -25,10 +25,10 @@ module TicTac
     def setup(keyname)
       @keyname=keyname
       if !File.directory?(cfg.tictac_dir)
-        puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
+        STDERR.puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
         FileUtils.mkdir_p(cfg.tictac_dir)
       else
-        puts "EXISTS\t\TICTAC_DIR\t\t#{cfg.tictac_dir}"
+        STDERR.puts "EXISTS\t\TICTAC_DIR\t\t#{cfg.tictac_dir}"
       end
 
       config_file = File.read(File.join(cfg.ipfs_path, 'config'))
@@ -52,7 +52,7 @@ module TicTac
       end.chomp
       File.write(ipfslink_path, pkey_openssl_ipfsaddr)
       File.write(ipfspub_path, pubkey_ipfs)
-      puts "IMPORTED\t#{keyname}"
+      STDERR.puts "IMPORTED\t#{keyname}"
       self
     end
     def private_path

@@ -21,22 +21,21 @@ if __FILE__ == $0
     opts.on('-i','--identity identity') {|x| o[:identity]=x }
   end
   parser.parse!
-  puts o.inspect
   id=TicTac::Identity.new(o[:identity])
   
   if o[:opponent]
     game= TicTac::Repos::Game.create(id,o[:opponent],o[:game_class])
-    puts game.pretty_print
+    STDERR.puts game.pretty_print
     puts game.ipfs_addr
   elsif o[:move] && o[:game]
     game=TicTac::Repos::Game.new(o[:game])
     new_game=nil
     new_game=game.move(id,o[:move])
-    puts new_game.pretty_print
+    STDERR.puts new_game.pretty_print
     puts new_game.ipfs_addr
   elsif o[:game]
     game=TicTac::Repos::Game.new(o[:game])
-    puts game.pretty_print
+    STDERR.puts game.pretty_print
     puts game.ipfs_addr
   else
     puts parser.banner
