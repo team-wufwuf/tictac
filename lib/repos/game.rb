@@ -17,7 +17,7 @@ module TicTac
         @signer=@initblock.signer
         @rules=@initblock.data
         @players=@rules[:players]
-        @game=Games[@rules[:game]].new(@rules[:game_state])
+        @game=Games[@rules[:game]].new
         if !@rules[:players].include?(@signer) || !@rules[:players][0] || !@rules[:players][1]
           raise GameError.new("INVALID_PLAYERS")
         end
@@ -45,14 +45,13 @@ module TicTac
         end
         idx
       end
-
       def process_move(player_key,move)
         player=get_player_index(player_key)
         @game=@game.move(player,move)
       end
       def move(id,move)
         process_move(id.public_key_link,move)
-        Game.new(@chain.last.append(id,move).ipfs_addr)
+        @game=Game.new(@chain.last.append(id,move).ipfs_addr)
       end
       def get(name: nil, pub_key: nil)
         # find matching user, return User object.
@@ -90,12 +89,15 @@ if __FILE__ == $0
   elsif o[:move] && o[:game]
     game=TicTac::Repos::Game.new(o[:game])
     new_game=nil
+    require 'pry'
+    binding.pry
     new_game=game.move(id,o[:move])
     puts new_game.pretty_print
     puts new_game.ipfs_addr
   elsif o[:game]
     game=TicTac::Repos::Game.new(o[:game])
     puts game.pretty_print
+    puts game.ipfs_addr
   else
     puts parser.banner
   end

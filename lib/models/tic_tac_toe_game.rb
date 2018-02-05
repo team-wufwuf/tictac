@@ -37,12 +37,22 @@ module TicTac
     class TicTacGame
       attr_accessor :state
       def initialize(board=nil, current_player=1, state=:pending)
-        @board = board || EMPTY_BOARD
+        board_to_load=board || EMPTY_BOARD
+        #gotta deep clone the state
+        @board =JSON.load(JSON.dump(board_to_load))
         @current_player = current_player
         @state=state
       end
       attr_reader :board, :state, :current_player
       def move(player,move)
+        if player == 0
+          player=-1
+        elsif player == 1
+          player=1
+        else
+          raise GameModelError.new("INVALID_PLAYER")
+        end
+        
         input_state=move[:state].to_sym unless !move[:state]
         if input_state == :accepted
           accept_game(player)
@@ -53,14 +63,13 @@ module TicTac
       def accept_game(player)
         raise GameModelError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
         raise GameModelError.new('NOT_PENDING') if state != :pending
-
         TicTacGame.new(board, player, :accepted)
       end
       def play(player, posx, posy)
         validate_move(player, posx, posy)
         new_board = @board.clone.tap { |b| b[posx][posy] = player }
         state = get_state(new_board)
-        TicTacGame.new(new_board, player, state)
+        TicTacGame.new(new_board, player*-1, state)
       end
 
       def get_state(b)
@@ -87,8 +96,6 @@ module TicTac
       end
       
       def validate_move(player, x, y)
-        require 'pry'
-        binding.pry
         if x > 2 || y > 2 || x < 0 || y < 0 || @board[x][y] != 0 || (player == current_player)
           raise GameModelError.new("INVALID_MOVE")
         end
@@ -107,6 +114,7 @@ module TicTac
         |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
         |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
         -------
+        #{@current_player}
         """
       end
       
