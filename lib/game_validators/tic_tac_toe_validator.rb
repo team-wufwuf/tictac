@@ -1,17 +1,18 @@
 module TicTac
   module GameValidator
     class TicTacToeValidator < Base
-      validate_turn do |state, turn|
-        return initialize_game(turn) if state.nil?
-        return accept_game(turn) if state.board_state == 'pending'
-        model.play(turn.player, turn.x, turn.y)
-        model
+      turn do |state, turn|
+        return initialize_game if state.nil?
+        return accept_game(state, turn) if state.board_state == :pending
+        state.play(turn.player, turn.x, turn.y)
       end
 
-      def initialize_game(turn)
+      def initialize_game
+        TicTic::Models::TicTacGame.new
       end
 
-      def accept_game(turn)
+      def accept_game(state, turn)
+        state.accept_game(turn.player)  
       end
     end
   end

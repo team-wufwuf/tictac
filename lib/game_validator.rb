@@ -24,6 +24,10 @@ module TicTac
           @turn_validator = block
         end
 
+        def pretty_print(&block)
+          @print_block = block
+        end
+
         attr_reader :turn_validator
       end
     end
