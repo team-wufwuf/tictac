@@ -52,8 +52,8 @@ module TicTac
         else
           raise GameModelError.new("INVALID_PLAYER")
         end
-        
         input_state=move[:state].to_sym unless !move[:state]
+
         if input_state == :accepted
           accept_game(player)
         else
@@ -69,7 +69,7 @@ module TicTac
         validate_move(player, posx, posy)
         new_board = @board.clone.tap { |b| b[posx][posy] = player }
         state = get_state(new_board)
-        TicTacGame.new(new_board, player*-1, state)
+        TicTacGame.new(new_board, player, state)
       end
 
       def get_state(b)

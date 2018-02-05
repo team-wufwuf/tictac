@@ -89,8 +89,6 @@ if __FILE__ == $0
   elsif o[:move] && o[:game]
     game=TicTac::Repos::Game.new(o[:game])
     new_game=nil
-    require 'pry'
-    binding.pry
     new_game=game.move(id,o[:move])
     puts new_game.pretty_print
     puts new_game.ipfs_addr
