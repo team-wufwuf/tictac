@@ -8,6 +8,15 @@ require_relative 'config'
 module TicTac
   class Identity
     attr_accessor :cfg
+    def self.resolve_public_key_link(ipfs_link)
+      pubkey_object=%x(ipfs cat  #{ipfs_link})
+      obj_lines=pubkey_object.split("\n")
+      if obj_lines.first =~ /ipns/
+        authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
+      end
+      pubkey=obj_lines.join("\n")
+      return {public_key: pubkey.empty? ? nil : pubkey,authority_link: authority_link}
+    end
     def initialize(keyname="self",cfg=::TicTac.cfg)
       @cfg = cfg
       setup(keyname)
@@ -22,9 +31,7 @@ module TicTac
       private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
     end
 
-    def setup(keyname)
-      require 'pry'
-      binding.pry
+    def setup(keyname="self")
       @keyname=keyname
       if !File.directory?(cfg.tictac_dir)
         STDERR.puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"

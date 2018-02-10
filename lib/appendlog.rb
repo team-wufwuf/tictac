@@ -10,14 +10,19 @@ require_relative 'identity'
 module TicTac
   class SSLError < StandardError
   end
-  def self.resolve_public_key_link(ipfs_link)
-    pubkey_object=%x(ipfs cat  #{ipfs_link})
-    obj_lines=pubkey_object.split("\n")
-    if obj_lines.first =~ /ipns/
-      authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
+  def self.resolve_public_key_link(key_or_ipfs_link)
+    if (key_or_ipfs_linksigner =~ /PUBLIC KEY/)
+      pubkey=key_or_ipfs_link
+    else
+      pubkey_object=%x(ipfs cat  #{key_or_ipfs_link})
+      obj_lines=pubkey_object.split("\n")
+      if obj_lines.first =~ /ipns/
+        authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
+      end
+      pubkey=obj_lines.join("\n")
     end
-    pubkey=obj_lines.join("\n")
-    return {public_key: pubkey.empty? ? nil : pubkey,authority_link: authority_link}
+    key=OpenSSL::PKey::RSA.new(pubkey)
+    return {public_key: key? ? nil : pubkey,authority_link: authority_link}
   end
 
   class Block
@@ -74,13 +79,7 @@ module TicTac
     end
 
     def signed?
-      pubkey=nil
-      if (@signer =~ /PUBLIC KEY/)
-        pubkey=@signer
-      else
-        pubkey=TicTac.resolve_public_key_link(@signer)[:public_key]
-      end
-      key=OpenSSL::PKey::RSA.new(pubkey)
+      pubkey=Tictac.resolve_public_key_link(@signer)[:public_key]
       digest_algo=OpenSSL::Digest::SHA256.new
       key.verify(digest_algo,@signature, JSON.dump(@payload))
     end
