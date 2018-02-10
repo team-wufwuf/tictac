@@ -31,19 +31,33 @@ RSpec.describe TicTac::Identity do
     config_file["Addresses"]["API"] = "/ip4/127.0.0.1/tcp/#{api_port}"
     config_file["Addresses"]["Gateway"] = "/ip4/127.0.0.1/tcp/#{gateway_port}"
     File.write("#{@tmp_dir}/config",JSON.dump(config_file))
-    @ipfs_proc=Open3.popen3("ipfs -c #{@tmp_dir} daemon 2>&1")
-        Timeout::timeout(20) do
-          while true
-            line= @ipfs_proc[1].readline
-            puts line
-            (line =~ /Daemon is ready/) && break
-          end
+    @external_ipfs=false
+    begin
+      ipfs_info=JSON.load(%x(ipfs -c "#{@tmp_dir}" id))
+      if ipfs_info["Addresses"] != nil
+        puts "external client detected"
+        @external_ipfs=true
+      end
+    rescue Exception => e
+      puts "no client detected"
+    end
+    if !@external_ipfs
+      @ipfs_proc=Open3.popen3("ipfs -c #{@tmp_dir} daemon 2>&1")
+      Timeout::timeout(20) do
+        while true
+          line= @ipfs_proc[1].readline
+          puts line
+          (line =~ /Daemon is ready/) && break
         end
+      end
+    end
   end
   after(:all) do
-    Process.kill("KILL",@ipfs_proc[3].pid)
-    sleep 1
-    Process.kill("KILL",@ipfs_proc[3].pid+1)
+    if !@external_ipfs 
+      Process.kill("KILL",@ipfs_proc[3].pid)
+      sleep 1
+      Process.kill("KILL",@ipfs_proc[3].pid+1)
+    end
   end
 
   it 'generates the files' do
