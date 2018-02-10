@@ -1,3 +1,5 @@
+require 'timeout'
+require 'open3'
 require 'spec_helper'
 require 'identity'
 require 'config'
@@ -5,8 +7,8 @@ require 'config'
 RSpec.describe TicTac::Identity do
   let(:tmp_dir) { ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp') }
 
-  let(:cfg) { TicTac::Config.new(tmp_dir) }
 
+  
   let(:identity_string) do
     JSON.generate(
       Identity: {
@@ -17,13 +19,31 @@ RSpec.describe TicTac::Identity do
   end
 
   before do
+    swarm_port=4051
+    api_port=5051
+    gateway_port=8089
+    cfg=TicTac::Config.new(tmp_dir)
+    config_file=JSON.load(File.open("#{tmp_dir}/config"))
+    config_file["Addresses"]["Swarm"][0] = "/ip4/127.0.0.1/tcp/#{swarm_port}"
+    config_file["Addresses"]["API"] = "/ip4/127.0.0.1/tcp/#{api_port}"
+    config_file["Addresses"]["Gateway"] = "/ip4/127.0.0.1/tcp/#{gateway_port}"
+    File.write("#{tmp_dir}/config",JSON.dump(config_file))
+    @ipfs_proc=Open3.popen3("ipfs -c #{tmp_dir} daemon")
     FileUtils.remove_dir(tmp_dir) if File.exists?(tmp_dir)
     FileUtils.mkdir_p(tmp_dir)
-    File.write(File.join(tmp_dir, 'config'), identity_string)
   end
-
+    it 'runs the ipfs daemon' do
+      Timeout::timeout(20) do
+        while true
+          line= @ipfs_proc[1].readline
+          puts line
+          (line =~ /Daemon is ready/) && break
+        end
+        expect { "eggs" }.to eq("eggs")        
+      end
+    end
   it 'generates the files' do
-    TicTac::Identity.new(cfg).setup
+    TicTac::Identity.new("self",cfg).setup
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pem'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pub'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.ipfspub'))).to be true

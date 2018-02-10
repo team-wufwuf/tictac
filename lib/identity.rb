@@ -8,7 +8,7 @@ require_relative 'config'
 module TicTac
   class Identity
     attr_accessor :cfg
-    def initialize(keyname,cfg=::TicTac.cfg)
+    def initialize(keyname="self",cfg=::TicTac.cfg)
       @cfg = cfg
       setup(keyname)
     end
@@ -23,6 +23,8 @@ module TicTac
     end
 
     def setup(keyname)
+      require 'pry'
+      binding.pry
       @keyname=keyname
       if !File.directory?(cfg.tictac_dir)
         STDERR.puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
