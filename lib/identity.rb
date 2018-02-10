@@ -8,14 +8,17 @@ require_relative 'config'
 module TicTac
   class Identity
     attr_accessor :cfg
+
     def self.resolve_public_key_link(ipfs_link)
+      authority_link=nil
       pubkey_object=%x(ipfs cat  #{ipfs_link})
       obj_lines=pubkey_object.split("\n")
       if obj_lines.first =~ /ipns/
         authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
       end
       pubkey=obj_lines.join("\n")
-      return {public_key: pubkey.empty? ? nil : pubkey,authority_link: authority_link}
+      key=OpenSSL::PKey::RSA.new(pubkey)
+      return {public_key: key ? key : nil,authority_link: authority_link}
     end
     def initialize(keyname="self",cfg=::TicTac.cfg)
       @cfg = cfg

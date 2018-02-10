@@ -1,4 +1,3 @@
-
 require 'optparse'
 require 'open3'
 require 'openssl'
@@ -9,20 +8,6 @@ require_relative 'identity'
 
 module TicTac
   class SSLError < StandardError
-  end
-  def self.resolve_public_key_link(key_or_ipfs_link)
-    if (key_or_ipfs_linksigner =~ /PUBLIC KEY/)
-      pubkey=key_or_ipfs_link
-    else
-      pubkey_object=%x(ipfs cat  #{key_or_ipfs_link})
-      obj_lines=pubkey_object.split("\n")
-      if obj_lines.first =~ /ipns/
-        authority_link=obj_lines.shift #optional, and really more of a hint: where we can expect updates from pubkey's owner to show up.
-      end
-      pubkey=obj_lines.join("\n")
-    end
-    key=OpenSSL::PKey::RSA.new(pubkey)
-    return {public_key: key? ? nil : pubkey,authority_link: authority_link}
   end
 
   class Block
@@ -79,9 +64,9 @@ module TicTac
     end
 
     def signed?
-      pubkey=Tictac.resolve_public_key_link(@signer)[:public_key]
+      pubkey=TicTac::Identity.resolve_public_key_link(@signer)[:public_key]
       digest_algo=OpenSSL::Digest::SHA256.new
-      key.verify(digest_algo,@signature, JSON.dump(@payload))
+      pubkey.verify(digest_algo,@signature, JSON.dump(@payload))
     end
 
     def ==(block)

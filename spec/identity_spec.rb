@@ -41,15 +41,9 @@ RSpec.describe TicTac::Identity do
         end
   end
   after(:all) do
-
-    require 'pry'
-    binding.pry
     Process.kill("KILL",@ipfs_proc[3].pid)
-    Timeout::timeout(5) do
-      while true 
-        puts @ipfs_proc[1].readline
-      end
-    end
+    sleep 1
+    Process.kill("KILL",@ipfs_proc[3].pid+1)
   end
 
   it 'generates the files' do
