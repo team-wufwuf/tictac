@@ -35,41 +35,67 @@ module TicTac
     # board state nxn array of integers. 0 neutral. 1 crosses. -1 circles.
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
     class TicTacGame
-      attr_accessor :state
-      def initialize(board=nil, current_player=1, state=:pending)
-        board_to_load=board || EMPTY_BOARD
-        #gotta deep clone the state
-        @board =JSON.load(JSON.dump(board_to_load))
-        @current_player = current_player
-        @state=state
-      end
-      attr_reader :board, :state, :current_player
-      def move(player,move)
-        if player == 0
-          player=-1
-        elsif player == 1
-          player=1
-        else
-          raise GameModelError.new("INVALID_PLAYER")
-        end
-        input_state=move[:state].to_sym unless !move[:state]
 
-        if input_state == :accepted
+      def initialize(args)
+        board_to_load   = args[:board]          || EMPTY_BOARD
+        @current_player = args[:current_player] || 1
+        @state          = args[:state]          || :pending
+
+        @board = JSON.load(JSON.dump(board_to_load))
+
+        initial_setup(args)
+      end
+
+      def self.new_game(args)
+        raise GameModelError("New game on non-new board") if args.has_key? :board
+        raise GameModelError("New game with defined current player") if args.has_key? :current_player
+        raise GameModelError("New game with defined state") if args.has_key? :state
+
+        new(args)
+      end
+
+      def initial_setup(args)
+        @players = {
+          args[:players][0] => 1,
+          args[:players][1] => -1 
+        }
+      end
+
+      def clone
+        TicTacGame.new(board, player, state)
+      end
+
+      attr_reader :board, :state, :current_player, :players
+
+      def move(move)
+        raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player
+
+        if state == :pending
           accept_game(player)
+        elsif state == :accepted || state == :playing
+          play(player, move)
         else
-          play(player,move[:x],move[:y])
+          raise GameModelError('GAME_OVER')
         end
       end
+
+      private
+
+      attr_writer :board, :state, :current_player
+
       def accept_game(player)
         raise GameModelError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
-        raise GameModelError.new('NOT_PENDING') if state != :pending
-        TicTacGame.new(board, player, :accepted)
+        raise GameModelError.new('NOT_PENDING')          if state  != :pending
+
+        state = :accepted
       end
-      def play(player, posx, posy)
-        validate_move(player, posx, posy)
-        new_board = @board.clone.tap { |b| b[posx][posy] = player }
+
+      def play(move)
+        player = players[move[:player]]
+        validate_move(player, move[:x], move[:y])
+
+        board[posx][posy] = player
         state = get_state(new_board)
-        TicTacGame.new(new_board, player, state)
       end
 
       def get_state(b)
@@ -117,7 +143,6 @@ module TicTac
         #{@current_player}
         """
       end
-      
     end
   end
 end
