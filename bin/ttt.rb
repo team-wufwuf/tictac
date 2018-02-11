@@ -17,24 +17,24 @@ if __FILE__ == $0
         o[:move] = {x: c[0].to_i, y: c[1].to_i }
       end
     end
-    opts.on('-o','--opponent opponent') {|x| o[:opponent]=x }
-    opts.on('-i','--identity identity') {|x| o[:identity]=x }
+    opts.on('-o','--opponent opponent','use this option to create a brand new game-- specify your opponents ipfs link address') {|x| o[:opponent]=x }
+    opts.on('-i','--identity identity','the name of your IPFS private key') {|x| o[:identity]=x }
   end
   parser.parse!
   id=TicTac::Identity.new(o[:identity])
   
   if o[:opponent]
-    game= TicTac::Repos::Game.create(id,o[:opponent],o[:game_class])
+    game= TicTac::Repos::GamePlayer.create(id,o[:opponent],o[:game_class])
     STDERR.puts game.pretty_print
     puts game.ipfs_addr
   elsif o[:move] && o[:game]
-    game=TicTac::Repos::Game.new(o[:game])
+    game=TicTac::Repos::GamePlayer.new(o[:game])
     new_game=nil
     new_game=game.move(id,o[:move])
     STDERR.puts new_game.pretty_print
     puts new_game.ipfs_addr
   elsif o[:game]
-    game=TicTac::Repos::Game.new(o[:game])
+    game=TicTac::Repos::GamePlayer.new(o[:game])
     STDERR.puts game.pretty_print
     puts game.ipfs_addr
   else
