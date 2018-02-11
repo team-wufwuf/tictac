@@ -15,7 +15,7 @@ module TicTac
 
       # later this will be generated through introspection, so use the snakecase
       #   version of the game name
-      Games = {"tic_tac_game" => TicTac::Models::TicTacGame}
+      GameLookup = {"tic_tac_game" => TicTac::Models::TicTacGame}
 
       def initialize(ipfs_addr)
         @ipfs_addr = ipfs_addr
