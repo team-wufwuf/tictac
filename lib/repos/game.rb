@@ -1,4 +1,3 @@
-require 'forwardable'
 require_relative '../appendlog.rb'
 require_relative '../models/tic_tac_toe_game.rb'
 require_relative '../identity.rb'
@@ -11,7 +10,15 @@ module TicTac
     end
 
     class GameRepo
-      attr_reader :ipfs_addr, :game_status, :winner, :chain
+      class << self
+        attr_accessor :block_adapter
+      end
+
+      def block_adapter
+        self.class.block_adapter
+      end
+
+      attr_reader :ipfs_addr, :game, :chain
 
       # later this will be generated through introspection, so use the snakecase
       #   version of the game name
@@ -20,14 +27,14 @@ module TicTac
       def initialize(ipfs_addr)
         @ipfs_addr = ipfs_addr
 
-        @chain = TicTac::Block.new(ipfs_addr).get_chain
+        @chain = block_adapter.new(ipfs_addr).get_chain
 
         initblock = chain.first
 
         signer = initblock.signer
-        rules  = initblock.data
+        rules  = initblock.data[:rules]
 
-        game = GameLookup[rules[:game]].new_game(rules)
+        @game = GameLookup[rules[:game]].new_game(initblock.data)
 
         #skip initial block, which is validated right here in this function (i hope)
         @chain[1..-1].each { |b|
@@ -42,7 +49,7 @@ module TicTac
       # user: TicTac::Repos::User
       def self.create(id, opponent, game_class)
         @game=game_class.new
-        chain = TicTac::Block.from_data(
+        chain = block_adapter.from_data(
           id,
           nil,
           {

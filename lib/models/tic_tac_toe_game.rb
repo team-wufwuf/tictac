@@ -38,7 +38,6 @@ module TicTac
 
       def initialize(args)
         board_to_load   = args[:board]          || EMPTY_BOARD
-
         @rules          = args[:rules]
         @current_player = args[:current_player] || 1
         @state          = args[:state]          || :pending

@@ -23,6 +23,5 @@ RSpec.describe TicTac::Block do
     expect(chain[0]).to eq subject
     expect(chain[1]).to eq next_block
   end
-
 end
 
