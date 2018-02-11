@@ -44,10 +44,11 @@ module TicTac
         @state=state
       end
       attr_reader :board, :state, :current_player
-      def move(player,move)
-        if player == 0
+      #TODO: update this class to use player indexes 0..n internally, instead of 1 and -1
+      def move(player_arg,move)
+        if player_arg == 0
           player=-1
-        elsif player == 1
+        elsif player_arg == 1
           player=1
         else
           raise GameModelError.new("INVALID_PLAYER")
