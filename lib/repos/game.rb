@@ -10,7 +10,7 @@ module TicTac
     class GameError < StandardError
     end
 
-    class Games
+    class GameRepo
       attr_reader :ipfs_addr, :game_status, :winner, :chain
 
       # later this will be generated through introspection, so use the snakecase
@@ -27,7 +27,7 @@ module TicTac
         signer = initblock.signer
         rules  = initblock.data
 
-        game = Games[rules[:game]].new_game(rules)
+        game = GameLookup[rules[:game]].new_game(rules)
 
         #skip initial block, which is validated right here in this function (i hope)
         @chain[1..-1].each { |b|
