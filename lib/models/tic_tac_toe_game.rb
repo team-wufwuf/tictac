@@ -38,6 +38,8 @@ module TicTac
 
       def initialize(args)
         board_to_load   = args[:board]          || EMPTY_BOARD
+
+        @rules          = args[:rules]
         @current_player = args[:current_player] || 1
         @state          = args[:state]          || :pending
 
@@ -47,25 +49,25 @@ module TicTac
       end
 
       def self.new_game(args)
-        raise GameModelError("New game on non-new board") if args.has_key? :board
-        raise GameModelError("New game with defined current player") if args.has_key? :current_player
-        raise GameModelError("New game with defined state") if args.has_key? :state
+        raise GameModelError("New game on non-new board")            if args.has_key?  :board
+        raise GameModelError("New game with defined current player") if args.has_key?  :current_player
+        raise GameModelError("New game with defined state")          if args.has_key?  :state
+        raise GameModelError("New game with no rules")               if !args.has_key? :rules
 
         new(args)
       end
 
       def initial_setup(args)
-        @players = {
-          args[:players][0] => 1,
-          args[:players][1] => -1 
-        }
+        @players = args[:rules][:players].each_with_object({}) do |(k, v), agg|
+          agg[k] = (v[:player] == 1 ? 1 : -1)
+        end
       end
 
       def clone
         TicTacGame.new(board, player, state)
       end
 
-      attr_reader :board, :state, :current_player, :players
+      attr_reader :board, :state, :current_player, :players, :rules
 
       def move(move)
         raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player
