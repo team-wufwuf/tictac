@@ -11,8 +11,6 @@ module TicTac
     end
 
     class Games
-      extend Forwardable
-
       attr_reader :ipfs_addr, :game_status, :winner, :chain
 
       # later this will be generated through introspection, so use the snakecase
