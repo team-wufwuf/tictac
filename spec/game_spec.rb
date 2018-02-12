@@ -63,17 +63,41 @@ RSpec.describe TicTac::Repos::GameRepo do
     let(:expected_state) { :victory }
 
     it 'runs through the game and produces the expected state' do
-      subject.process_move(accept_json(player2))
-
-      turns.each do |turn|
-        subject.process_move(turn_json(*turn))
-        puts subject.game.pretty_print
-      end
-
-      game = subject.game
-
-      expect(game.state).to eq expected_state
+      game_asserter(turns, expected_state)
     end
+  end
+
+  context "Draw game" do
+    let(:turns) do [
+      [player1, 0, 0],
+      [player2, 2, 2],
+      [player1, 0, 1],
+      [player2, 2, 1],
+      [player1, 2, 0],
+      [player2, 0, 2],
+      [player1, 1, 1],
+      [player2, 1, 0],
+      [player1, 1, 2]
+    ] end
+
+    let(:expected_state) { :draw }
+
+    it 'runs through the game and produces the expected state' do
+      game_asserter(turns, expected_state)
+    end
+  end
+
+  def game_asserter(turns, expected_state)
+    subject.process_move(accept_json(player2))
+
+    turns.each do |turn|
+      subject.process_move(turn_json(*turn))
+      puts subject.game.pretty_print
+    end
+
+    game = subject.game
+
+    expect(game.state).to eq expected_state
   end
 
   def accept_json(player)
