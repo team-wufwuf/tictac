@@ -42,6 +42,19 @@ module TicTac
         @current_player = args[:current_player] || 1
         @state          = args[:state]          || :pending
 
+
+      def pretty_print
+        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
+        """
+        #{@state}
+        _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
+        -------
+        #{@current_player}
+        """
+      end
         @board = JSON.load(JSON.dump(board_to_load))
 
         initial_setup(args)
@@ -63,21 +76,45 @@ module TicTac
       end
 
       def clone
-        TicTacGame.new(board, player, state)
+        TicTacGame.new(
+          board: board,
+          current_player: current_player,
+          state: state,
+          rules: {
+            players: players.each_with_object({}) do |(k, v), agg|
+              agg[k] = {player: (v == 1 ? 1 : 2)}
+            end
+          }
+        )
       end
 
       attr_reader :board, :state, :current_player, :players, :rules
 
       def move(move)
+        player = move[:player]
+
         raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player
 
         if state == :pending
           accept_game(player)
         elsif state == :accepted || state == :playing
-          play(player, move)
+          play(move)
         else
           raise GameModelError('GAME_OVER')
         end
+      end
+
+      def pretty_print
+        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
+        """
+        #{@state}
+        _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
+        -------
+        #{@current_player}
+        """
       end
 
       private
@@ -88,15 +125,25 @@ module TicTac
         raise GameModelError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
         raise GameModelError.new('NOT_PENDING')          if state  != :pending
 
-        state = :accepted
+        # TODO: need some code to make sure the other player actually accepts.
+        # it needs to be a message that is different each time but both players accept
+        # so that it cannot be just repeated by a malicious player
+        
+        @current_player = players[player]
+        @state = :accepted
       end
 
       def play(move)
         player = players[move[:player]]
-        validate_move(player, move[:x], move[:y])
+
+        posx = move[:x]
+        posy = move[:y]
+
+        validate_move(player, posx, posy)
 
         board[posx][posy] = player
-        state = get_state(new_board)
+        @current_player = player
+        @state = get_state(board)
       end
 
       def get_state(b)
@@ -105,7 +152,7 @@ module TicTac
           player_1 = 0
           player_2 = 0
           path.each do |idx|
-            val = b[*idx]
+            val = b[idx[0]][idx[1]]
             if val == 1
               player_1 += 1
             elsif val == -1
@@ -130,19 +177,6 @@ module TicTac
 
       def self.name
         "tic-tac-toe"
-      end
-
-      def pretty_print
-        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
-        """
-        #{@state}
-        _____
-        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
-        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
-        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
-        -------
-        #{@current_player}
-        """
       end
     end
   end

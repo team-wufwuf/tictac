@@ -42,6 +42,16 @@ module TicTac
         }
       end
 
+      def process_move(move)
+        puts game.pretty_print
+        new_game = game.clone.tap { |g| g.move(move) }
+
+        block = chain.last.append(move[:player], move)
+        chain.push(block)
+        # now we know the chain is persisted we overwrite the game state
+        @game = new_game
+      end
+
       def pretty_print
         @game.pretty_print
       end
@@ -60,18 +70,6 @@ module TicTac
         ).ipfs_addr
 
         new(chain)
-      end
-
-      def get_player_index(ipfs_link)
-        if @players.has_key? 
-          raise GameError.new("INVALID_PLAYER")
-        end
-        @players[ipfs_link]
-      end
-
-      def process_move(player_key, move)
-        player = get_player_index(player_key)
-        game.move(move)
       end
     end
   end
