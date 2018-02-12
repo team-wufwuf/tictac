@@ -90,15 +90,16 @@ module TicTac
 
       attr_reader :board, :state, :current_player, :players, :rules
 
-      def move(move)
-        player = move[:player]
+      def move(player_id, move)
+        raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player_id
 
-        raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player
+        player = players[player_id]
+
 
         if state == :pending
           accept_game(player)
         elsif state == :accepted || state == :playing
-          play(move)
+          play(player, move)
         else
           raise GameModelError('GAME_OVER')
         end
@@ -133,9 +134,7 @@ module TicTac
         @state = :accepted
       end
 
-      def play(move)
-        player = players[move[:player]]
-
+      def play(player, move)
         posx = move[:x]
         posy = move[:y]
 
