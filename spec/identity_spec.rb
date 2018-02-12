@@ -1,3 +1,6 @@
+# coding: utf-8
+require 'timeout'
+require 'open3'
 require 'spec_helper'
 require 'identity'
 require 'config'
@@ -5,8 +8,8 @@ require 'config'
 RSpec.describe TicTac::Identity do
   let(:tmp_dir) { ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp') }
 
-  let(:cfg) { TicTac::Config.new(tmp_dir) }
 
+  
   let(:identity_string) do
     JSON.generate(
       Identity: {
@@ -16,24 +19,59 @@ RSpec.describe TicTac::Identity do
     )
   end
 
-  before do
-    FileUtils.remove_dir(tmp_dir) if File.exists?(tmp_dir)
-    FileUtils.mkdir_p(tmp_dir)
-    File.write(File.join(tmp_dir, 'config'), identity_string)
+  before(:all) do
+    swarm_port=4061
+    api_port=5061
+    gateway_port=8090
+    @tmp_dir=ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp')
+    @cfg=TicTac::Config.new(@tmp_dir)
+    puts @tmp_dir
+    config_file=JSON.load(File.open("#{@tmp_dir}/config"))
+    config_file["Addresses"]["Swarm"][0] = "/ip4/127.0.0.1/tcp/#{swarm_port}"
+    config_file["Addresses"]["API"] = "/ip4/127.0.0.1/tcp/#{api_port}"
+    config_file["Addresses"]["Gateway"] = "/ip4/127.0.0.1/tcp/#{gateway_port}"
+    File.write("#{@tmp_dir}/config",JSON.dump(config_file))
+    @external_ipfs=false
+    begin
+      ipfs_info=JSON.load(%x(ipfs -c "#{@tmp_dir}" id))
+      if ipfs_info["Addresses"] != nil
+        puts "external client detected"
+        @external_ipfs=true
+      end
+    rescue Exception => e
+      puts "no client detected"
+    end
+    if !@external_ipfs
+      @ipfs_proc=Open3.popen3("ipfs -c #{@tmp_dir} daemon 2>&1")
+      Timeout::timeout(20) do
+        while true
+          line= @ipfs_proc[1].readline
+          puts line
+          (line =~ /Daemon is ready/) && break
+        end
+      end
+    end
+  end
+  after(:all) do
+    if !@external_ipfs 
+      Process.kill("KILL",@ipfs_proc[3].pid)
+      sleep 1
+      Process.kill("KILL",@ipfs_proc[3].pid+1)
+    end
   end
 
   it 'generates the files' do
-    TicTac::Identity.new(cfg).setup
+    TicTac::Identity.new("self",@cfg).setup
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pem'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pub'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.ipfspub'))).to be true
-    expect(File.exists?(File.join(tmp_dir, 'tictac', 'pubkey.ipfslink'))).to be true
+    expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.ipfslink'))).to be true
+  end
+  it 'produces a signed link' do
+    id=TicTac::Identity.new("self",@cfg).setup("foo")
+    TicTac::Identity.resolve_public_key_link(id.public_key_link)
   end
 
-  it 'raises if a file exists' do
-    FileUtils.mkdir_p(File.join(tmp_dir, 'tictac'))
-    File.write(File.join(tmp_dir, 'tictac', 'self.pem'), 'hello')
-
-    expect { TicTac::Identity.new(cfg).setup }.to raise_error(TicTac::Identity::IpfsPathError)
-  end
+  
 end
+

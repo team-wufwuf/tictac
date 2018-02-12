@@ -36,29 +36,113 @@ module TicTac
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
     class TicTacGame
 
-      def initialize(board=nil, current_player=1, state=:pending)
-        @board = board || EMPTY_BOARD
-        @current_player = current_player
-        @state=state
+      def initialize(args)
+        board_to_load   = args[:board]          || EMPTY_BOARD
+        @rules          = args[:rules]
+        @current_player = args[:current_player] || 1
+        @state          = args[:state]          || :pending
+
+
+      def pretty_print
+        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
+        """
+        #{@state}
+        _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
+        -------
+        #{@current_player}
+        """
+      end
+        @board = JSON.load(JSON.dump(board_to_load))
+
+        initial_setup(args)
       end
 
-      attr_reader :board, :state, :current_player
+      def self.new_game(args)
+        raise GameModelError("New game on non-new board")            if args.has_key?  :board
+        raise GameModelError("New game with defined current player") if args.has_key?  :current_player
+        raise GameModelError("New game with defined state")          if args.has_key?  :state
+        raise GameModelError("New game with no rules")               if !args.has_key? :rules
+
+        new(args)
+      end
+
+      def initial_setup(args)
+        @players = args[:rules][:players].each_with_object({}) do |(k, v), agg|
+          agg[k] = (v[:player] == 1 ? 1 : -1)
+        end
+      end
+
+      def clone
+        TicTacGame.new(
+          board: board,
+          current_player: current_player,
+          state: state,
+          rules: {
+            players: players.each_with_object({}) do |(k, v), agg|
+              agg[k] = {player: (v == 1 ? 1 : 2)}
+            end
+          }
+        )
+      end
+
+      attr_reader :board, :state, :current_player, :players, :rules
+
+      def move(player_id, move)
+        raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player_id
+
+        player = players[player_id]
+
+
+        if state == :pending
+          accept_game(player)
+        elsif state == :accepted || state == :playing
+          play(player, move)
+        else
+          raise GameModelError('GAME_OVER')
+        end
+      end
+
+      def pretty_print
+        x=@board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
+        """
+        #{@state}
+        _____
+        |#{x[0][0]}|#{x[1][0]}|#{x[2][0]}|
+        |#{x[0][1]}|#{x[1][1]}|#{x[2][1]}|
+        |#{x[0][2]}|#{x[1][2]}|#{x[2][2]}|
+        -------
+        #{@current_player}
+        """
+      end
+
+      private
+
+      attr_writer :board, :state, :current_player
 
       def accept_game(player)
-        raise GameError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
-        raise GameError.new('NOT_PENDING') if state != :pending
+        raise GameModelError.new('WRONG_PLAYER_ACCEPTS') if player == current_player
+        raise GameModelError.new('NOT_PENDING')          if state  != :pending
 
-        TicTacGame.new(board, player, :accepted)
+        # TODO: need some code to make sure the other player actually accepts.
+        # it needs to be a message that is different each time but both players accept
+        # so that it cannot be just repeated by a malicious player
+        
+        @current_player = players[player]
+        @state = :accepted
       end
 
-      def play(player, posx, posy)
+      def play(player, move)
+        posx = move[:x]
+        posy = move[:y]
+
         validate_move(player, posx, posy)
 
-        new_board = @board.clone.tap { |b| b[posx][posy] = player }
-
-        state = get_state(new_board)
-
-        TicTacGame.new(new_board, player, state)
+        board[posx][posy] = player
+        @current_player = player
+        @state = get_state(board)
       end
 
       def get_state(b)
@@ -67,7 +151,7 @@ module TicTac
           player_1 = 0
           player_2 = 0
           path.each do |idx|
-            val = b[*idx]
+            val = b[idx[0]][idx[1]]
             if val == 1
               player_1 += 1
             elsif val == -1
@@ -83,24 +167,15 @@ module TicTac
         return :draw if draw
         :playing
       end
-
-      def validate_move(player, posx, posy)
-        if x > 2 || y > 2 || x < 0 || y < 0 || @game_state[x][y] != 0 || (player == current_player)
+      
+      def validate_move(player, x, y)
+        if x > 2 || y > 2 || x < 0 || y < 0 || @board[x][y] != 0 || (player == current_player)
           raise GameModelError.new("INVALID_MOVE")
         end
       end
 
       def self.name
         "tic-tac-toe"
-      end
-
-      def pretty_print
-        x = @board.collect {|r| r.collect { |x| PRETTY_MAP[x] } }
-        """
-        _______
-        |#{x.map{|y| y.join('|')}.join('|\n')}|
-        -------
-        """
       end
     end
   end
