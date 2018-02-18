@@ -27,7 +27,7 @@ module TicTac
       def self.add_move_to_game(block, identity, move)
         game = block_to_game(block)
 
-        game.move(identity.public_key, move)
+        game.move(identity.public_key_link, move)
 
         new_block = block.append(identity, move)
 
@@ -49,7 +49,7 @@ module TicTac
 
         game = GameLookup[rules[:game]].new_game(initblock.data).tap do |g|
           chain[1..-1].each do |b|
-            g.move(b.signer.public_key, b.data)
+            g.move(b.signer, b.data)
           end
         end
       end

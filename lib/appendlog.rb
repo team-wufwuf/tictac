@@ -20,7 +20,7 @@ module TicTac
       @signature=Base64.decode64(@block[:signature])
 
       @payload = JSON.parse(Base64.decode64(@block[:payload]), symbolize_names: true).tap do |p|
-        @data   = JSON.parse(p[:data], symbolize_names: true)
+        @data   = p[:data]
         @signer = p[:signer]
         @prev   = p[:prev]
       end

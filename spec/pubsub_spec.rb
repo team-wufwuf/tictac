@@ -18,7 +18,7 @@ describe 'pubsub' do
   let(:channel) { SecureRandom.hex }
 
   def publish_first_turn
-    first_turn = JSON.generate({
+    first_turn = {
       rules: {
         game: 'tic_tac_game',
         players: {
@@ -26,7 +26,7 @@ describe 'pubsub' do
           player2.public_key_link => {player: 2}
         }
       }
-    })
+    }
 
     block = TicTac::Block.from_data(player1, nil, first_turn)
     Publisher.publish(block.ipfs_addr)
@@ -36,9 +36,11 @@ describe 'pubsub' do
     @game = game
   end
 
-  def get_game
-    @game
+  def set_block(block)
+    @current_block = block
   end
+
+  attr_reader :game, :current_block
 
   module Publisher
     class << self
@@ -63,6 +65,7 @@ describe 'pubsub' do
         stdout.each do |line|
           block, game = TicTac::Repos::GameRepo.read_game(line)
           set_game game
+          set_block block
         end
       end
     end
@@ -74,6 +77,18 @@ describe 'pubsub' do
     block = publish_first_turn
 
     sleep 0.5
-    expect(get_game.state).to eq :pending
+    expect(game.state).to eq :pending
+  end
+
+  it 'can actually read data' do
+    block = publish_first_turn
+
+    sleep 0.5
+
+    TicTac::Repos::GameRepo.add_move_to_game(current_block, player2, {})
+
+    sleep 0.5
+
+    expect(game.state).to eq :accepted
   end
 end
