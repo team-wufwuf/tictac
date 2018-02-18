@@ -13,18 +13,21 @@ module TicTac
   class Block
     #this class is immutable.
     attr_accessor :signature, :signer, :prev, :ipfs_addr, :data
+
     def initialize(ipfs_addr)
       @ipfs_addr=ipfs_addr
-      @block=JSON.parse(%x(ipfs cat #{ipfs_addr}),symbolize_names: true)
+      @block=JSON.parse(%x(ipfs cat #{ipfs_addr.chomp}), symbolize_names: true)
       @signature=Base64.decode64(@block[:signature])
-      @payload=JSON.parse(Base64.decode64(@block[:payload]),symbolize_names: true)
-      @data=@payload[:data]
-      @signer=@payload[:signer]
-      @prev=@payload[:prev]
+
+      @payload = JSON.parse(Base64.decode64(@block[:payload]), symbolize_names: true).tap do |p|
+        @data   = JSON.parse(p[:data], symbolize_names: true)
+        @signer = p[:signer]
+        @prev   = p[:prev]
+      end
     end
 
-    def append(identity,data)
-      TicTac::Block.from_data(identity,@ipfs_addr,data)
+    def append(identity, data)
+      TicTac::Block.from_data(identity, @ipfs_addr, data)
     end
 
     def get_chain
@@ -42,7 +45,7 @@ module TicTac
       chain.reverse #so it's from oldest to newest.
     end
 
-    def self.from_data(id,last_block,data)
+    def self.from_data(id, last_block, data)
       payload = {
         data: data,
         signer: id.public_key_link,

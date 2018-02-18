@@ -12,9 +12,11 @@ module TicTac
         %x(ipfs -c #{@ipfs_path} init)
       end
     end
+
     def setup
       private_key = Identity.import_or_create_privkey_from_keystore("self")
     end
+
     attr_reader :ipfs_path
     def ipfspub_path
       tictac_join("#{@keyname}.ipfspub")

@@ -20,21 +20,33 @@ module TicTac
       key=OpenSSL::PKey::RSA.new(pubkey)
       return {public_key: key ? key : nil,authority_link: authority_link}
     end
+
     def initialize(keyname="self",cfg=::TicTac.cfg)
       @cfg = cfg
       setup(keyname)
     end
+
     def self.import_or_create_privkey_from_keystore(name="self")
       default_ipfs_dir="#{ENV['HOME']}/.ipfs"
-      privkey_ipfs_path = "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}/keystore/#{name}"
-      if !File.exist?(privkey_ipfs_path)
-        raise StandardError("can't find #{privkey_ipfs_path}")
+
+      privkey_ipfs_dir = "#{ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : default_ipfs_dir}/keystore"
+      privkey_ipfs_path = File.join(privkey_ipfs_dir, name)
+      if !File.exist?(privkey_ipfs_dir)
+        raise StandardError.new("can't find #{privkey_ipfs_dir}")
       end
+
       %x(ipfs key gen -t=rsa -s=4096 #{name})
-        pubkey=%x(ipfs key list -l | grep #{name}).split(' ').first
-        privkey_ipfs=Base64.strict_encode64(File.read(privkey_ipfs_path))
-        private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
-        {private_key: private_key,public_key_ipfs: pubkey}
+
+      pubkey=%x(ipfs key list -l | grep #{name}).split(' ').first
+
+      privkey_ipfs=Base64.strict_encode64(File.read(privkey_ipfs_path))
+
+      private_key=%x(echo #{privkey_ipfs} | ipfs_keys_export)
+
+      {
+        private_key: private_key,
+        public_key_ipfs: pubkey
+      }
     end
 
     def setup(keyname="self")
@@ -58,6 +70,7 @@ module TicTac
         private_key=keys[:private_key]
         pubkey_ipfs=keys[:public_key_ipfs]
       end
+
       File.write(private_path, private_key)
       pkey_obj = OpenSSL::PKey::RSA.new(private_key) #(File.read(cfg.private_path))
 
@@ -68,11 +81,14 @@ module TicTac
         i.close
         o.read
       end.chomp
+
       File.write(ipfslink_path, pkey_openssl_ipfsaddr)
       File.write(ipfspub_path, pubkey_ipfs)
+
       STDERR.puts "IMPORTED\t#{keyname}"
       self
     end
+
     def private_path
       cfg.tictac_join("#{@keyname}.pem")
     end
@@ -110,6 +126,6 @@ module TicTac
 
   end
 
-    class IpfsPathError < StandardError
-    end
+  class IpfsPathError < StandardError
+  end
 end
