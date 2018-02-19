@@ -2,10 +2,10 @@
 require 'timeout'
 require 'open3'
 require 'spec_helper'
-require 'identity'
-require 'config'
+require 'ipfs/identity'
+require 'ipfs/config'
 
-RSpec.describe TicTac::Identity do
+RSpec.describe Ipfs::Identity do
   let(:tmp_dir) { ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp') }
 
 
@@ -24,7 +24,7 @@ RSpec.describe TicTac::Identity do
     api_port=5061
     gateway_port=8090
     @tmp_dir=ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp')
-    @cfg=TicTac::Config.new(@tmp_dir)
+    @cfg=Ipfs::Config.new(@tmp_dir)
     puts @tmp_dir
     config_file=JSON.load(File.open("#{@tmp_dir}/config"))
     config_file["Addresses"]["Swarm"][0] = "/ip4/127.0.0.1/tcp/#{swarm_port}"
@@ -61,15 +61,15 @@ RSpec.describe TicTac::Identity do
   end
 
   it 'generates the files' do
-    TicTac::Identity.new("self",@cfg).setup
+    Ipfs::Identity.new("self",@cfg).setup
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pem'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.pub'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.ipfspub'))).to be true
     expect(File.exists?(File.join(tmp_dir, 'tictac', 'self.ipfslink'))).to be true
   end
   it 'produces a signed link' do
-    id=TicTac::Identity.new("self",@cfg).setup("foo")
-    TicTac::Identity.resolve_public_key_link(id.public_key_link)
+    id=Ipfs::Identity.new("self",@cfg).setup("foo")
+    Ipfs::Identity.resolve_public_key_link(id.public_key_link)
   end
 
   

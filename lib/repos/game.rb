@@ -1,7 +1,4 @@
-require_relative '../appendlog.rb'
-require_relative '../models/tic_tac_toe_game.rb'
-require_relative '../identity.rb'
-
+require_relative '../models/tic_tac_toe_game'
 module TicTac
   module Repos
     User = Struct.new(:name, :pub_key)

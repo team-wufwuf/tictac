@@ -3,17 +3,17 @@ require 'spec_helper'
 require 'pty'
 require 'securerandom'
 
-require 'appendlog'
-require 'config'
-require 'identity'
+require 'ipfs/block'
+require 'ipfs/config'
+require 'ipfs/identity'
 require 'repos/game'
 
 describe 'pubsub' do
   let(:tmp_dir)  { ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp') }
-  let(:cfg)      { TicTac::Config.new(tmp_dir) }
+  let(:cfg)      { Ipfs::Config.new(tmp_dir) }
 
-  let(:player1) { TicTac::Identity.new('joe',  cfg) }
-  let(:player2) { TicTac::Identity.new('jane', cfg) }
+  let(:player1) { Ipfs::Identity.new('joe',  cfg) }
+  let(:player2) { Ipfs::Identity.new('jane', cfg) }
 
   let(:channel) { SecureRandom.hex }
 
@@ -28,7 +28,7 @@ describe 'pubsub' do
       }
     }
 
-    block = TicTac::Block.from_data(player1, nil, first_turn)
+    block = Ipfs::Block.from_data(player1, nil, first_turn)
     Publisher.publish(block.ipfs_addr)
   end
 
@@ -53,7 +53,7 @@ describe 'pubsub' do
   end
 
   before(:each) do
-    TicTac::Repos::GameRepo.block_adapter = TicTac::Block
+    TicTac::Repos::GameRepo.block_adapter = Ipfs::Block
     TicTac::Repos::GameRepo.publisher     = Publisher
 
     Publisher.channel = channel

@@ -3,18 +3,22 @@ require 'repos/game'
 
 RSpec.describe TicTac::Repos::GameRepo do
   let(:block_adapter) { double(:block_adapter, new: starter_block) }
-  let(:starter_block) { Block.new(player1, first_turn).tap { |b| b.get_chain = [b] } }
+  let(:starter_block) do
+    Block.new(player1.public_key_link, first_turn).tap { |b| b.get_chain = [b] }
+  end
 
-  let(:player1) { double(:player1, public_key: 'joe') }
-  let(:player2) { double(:player2, public_key: 'theodore') }
+  let(:player1) { double(:player1, public_key_link: 'joe') }
+  let(:player2) { double(:player2, public_key_link: 'theodore') }
+
+  let(:publisher) { spy(:publisher) }
 
   let(:first_turn) {
     {
       rules: {
         game: 'tic_tac_game',
         players: {
-          player1.public_key => {player: 1},
-          player2.public_key => {player: 2}
+          player1.public_key_link.to_sym => {player: 1},
+          player2.public_key_link.to_sym => {player: 2}
         }
       }
     }
@@ -22,9 +26,13 @@ RSpec.describe TicTac::Repos::GameRepo do
 
   Block = Struct.new(:signer, :data, :get_chain) do
     def append(signer, data)
-      Block.new(signer, data).tap do |b|
+      Block.new(signer.public_key_link, data).tap do |b|
         b.get_chain = get_chain.concat([b])
       end
+    end
+
+    def ipfs_addr
+      nil
     end
 
     def prev
@@ -33,11 +41,12 @@ RSpec.describe TicTac::Repos::GameRepo do
   end
 
   let(:game_blocks) {
-    [Block.new(player1.public_key, first_turn)]
+    [Block.new(player1.public_key_link, first_turn)]
   }
 
   before do
     described_class.block_adapter = block_adapter
+    described_class.publisher     = publisher
   end
 
   subject { described_class }
@@ -100,7 +109,7 @@ RSpec.describe TicTac::Repos::GameRepo do
   end
 
   def accept_json(player)
-    {player: player.public_key}
+    {player: player.public_key_link}
   end
 
   def turn_json(player, posx, posy)

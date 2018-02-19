@@ -1,3 +1,5 @@
+require 'json'
+
 module TicTac
   module Models
     class GameModelError < StandardError
@@ -91,9 +93,10 @@ module TicTac
       attr_reader :board, :state, :current_player, :players, :rules
 
       def move(player_id, move)
+
         raise GameModelError.new("INVALID_PLAYER") unless players.keys.include? player_id.to_sym
 
-        player = players[player_id]
+        player = players[player_id.to_sym]
 
         if state == :pending
           accept_game(player)
@@ -180,6 +183,3 @@ module TicTac
   end
 end
 
-if __FILE__ == $0
-  puts "yippee"
-end

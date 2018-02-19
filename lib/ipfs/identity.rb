@@ -5,7 +5,7 @@ require 'openssl'
 
 require_relative 'config'
 
-module TicTac
+module Ipfs
   class Identity
     attr_accessor :cfg
 
@@ -21,7 +21,7 @@ module TicTac
       return {public_key: key ? key : nil,authority_link: authority_link}
     end
 
-    def initialize(keyname="self",cfg=::TicTac.cfg)
+    def initialize(keyname="self",cfg=::Ipfs.cfg)
       @cfg = cfg
       setup(keyname)
     end
