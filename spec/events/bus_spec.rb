@@ -39,10 +39,6 @@ RSpec.describe Events::Bus do
 
     attr_reader :message
 
-    class << self
-      attr_reader :message
-    end
-
     on_event(:foo_test) do |msg|
       @message = msg
     end
