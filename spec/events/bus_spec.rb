@@ -33,4 +33,37 @@ RSpec.describe Events::Bus do
   it 'doesnt care if there are not subscribers' do
     publisher.run('IMPORTANT_DATA')
   end
+
+  class InclusionSubscriber
+    include Events::Subscriber
+
+    attr_reader :message
+
+    class << self
+      attr_reader :message
+    end
+
+    on_event(:foo_test) do |msg|
+      @message = msg
+    end
+  end
+
+  class InclusionPublisher
+    include Events::Publisher
+
+    def run
+      publish(:foo_test, 'TRANSMISSION_SUBMIT')
+    end
+  end
+
+  context 'using inclusion' do
+    let(:publisher)  { InclusionPublisher.new.tap { |p| p.bus = subject } }
+    let(:subscriber) { InclusionSubscriber.new.tap { |s| s.bus = subject ; s.register_events } }
+
+    it 'publishes and subscribes' do
+      subscriber
+      publisher.run
+      expect(subscriber.message).to eq 'TRANSMISSION_SUBMIT'
+    end
+  end
 end
