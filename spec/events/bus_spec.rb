@@ -18,8 +18,8 @@ RSpec.describe Events::Bus do
     message = 'UNCHANGED'
     message2 = 'UNCHANGED'
 
-    p = Proc.new { |msg| message = msg }
-    p2 = Proc.new { |msg| message2 = msg }
+    p = proc { |msg| message = msg }
+    p2 = proc { |msg| message2 = msg }
 
     subject.subscribe(:foo_event, p)
     subject.subscribe(:foo_event, p2)
@@ -54,7 +54,12 @@ RSpec.describe Events::Bus do
 
   context 'using inclusion' do
     let(:publisher)  { InclusionPublisher.new.tap { |p| p.bus = subject } }
-    let(:subscriber) { InclusionSubscriber.new.tap { |s| s.bus = subject ; s.register_events } }
+    let(:subscriber) do
+      InclusionSubscriber.new.tap do |s|
+        s.bus = subject
+        s.register_events
+      end
+    end
 
     it 'publishes and subscribes' do
       subscriber

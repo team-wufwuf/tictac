@@ -17,37 +17,31 @@ describe 'pubsub' do
 
   let(:channel) { SecureRandom.hex }
 
-  def publish_first_turn
-    first_turn = {
+  let(:first_turn) do
+    {
       rules: {
         game: 'tic_tac_game',
         players: {
-          player1.public_key_link => {player: 1},
-          player2.public_key_link => {player: 2}
+          player1.public_key_link => { player: 1 },
+          player2.public_key_link => { player: 2 }
         }
       }
     }
+  end
 
+  def publish_first_turn
     block = Ipfs::Block.from_data(player1, nil, first_turn)
     Publisher.publish(block.ipfs_addr)
   end
 
-  def set_game(game)
-    @game = game
-  end
-
-  def set_block(block)
-    @current_block = block
-  end
-
-  attr_reader :game, :current_block
+  attr_accessor :current_block, :game
 
   module Publisher
     class << self
       attr_accessor :channel
 
       def publish(addr)
-        %x{ipfs pubsub pub #{channel} #{addr} '\n'}
+        `ipfs pubsub pub #{channel} #{addr} '\n'`
       end
     end
   end
@@ -60,12 +54,12 @@ describe 'pubsub' do
 
     Thread.abort_on_exception = true
 
-    pub_thread = Thread.new do
-      PTY.spawn "ipfs pubsub sub #{channel}" do |stdout, stdin, pid|
+    Thread.new do
+      PTY.spawn "ipfs pubsub sub #{channel}" do |stdout, _stdin, _pid|
         stdout.each do |line|
           block, game = TicTac::Repos::GameRepo.read_game(line)
-          set_game game
-          set_block block
+          self.game = game
+          self.current_block = block
         end
       end
     end
@@ -74,14 +68,14 @@ describe 'pubsub' do
   end
 
   it 'can actually read data' do
-    block = publish_first_turn
+    publish_first_turn
 
     sleep 0.5
     expect(game.state).to eq :pending
   end
 
   it 'can actually read data' do
-    block = publish_first_turn
+    publish_first_turn
 
     sleep 0.5
 

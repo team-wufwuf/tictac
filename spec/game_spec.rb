@@ -12,17 +12,17 @@ RSpec.describe TicTac::Repos::GameRepo do
 
   let(:publisher) { spy(:publisher) }
 
-  let(:first_turn) {
+  let(:first_turn) do
     {
       rules: {
         game: 'tic_tac_game',
         players: {
-          player1.public_key_link.to_sym => {player: 1},
-          player2.public_key_link.to_sym => {player: 2}
+          player1.public_key_link.to_sym => { player: 1 },
+          player2.public_key_link.to_sym => { player: 2 }
         }
       }
     }
-  }
+  end
 
   Block = Struct.new(:signer, :data, :get_chain) do
     def append(signer, data)
@@ -40,9 +40,9 @@ RSpec.describe TicTac::Repos::GameRepo do
     end
   end
 
-  let(:game_blocks) {
+  let(:game_blocks) do
     [Block.new(player1.public_key_link, first_turn)]
-  }
+  end
 
   before do
     described_class.block_adapter = block_adapter
@@ -52,7 +52,7 @@ RSpec.describe TicTac::Repos::GameRepo do
   subject { described_class }
 
   it 'creates a new game' do
-    block, game = subject.read_game('soemthing')
+    _, game = subject.read_game('soemthing')
 
     expect(game.state).to          eq :pending
     expect(game.current_player).to eq 1
@@ -60,14 +60,16 @@ RSpec.describe TicTac::Repos::GameRepo do
   end
 
   # some valid games to player
-  context "Player1 straight across the top" do
-    let(:turns) do [
-      [player1, 0, 0],
-      [player2, 2, 2],
-      [player1, 0, 1],
-      [player2, 2, 1],
-      [player1, 0, 2]
-    ] end
+  context 'Player1 straight across the top' do
+    let(:turns) do
+      [
+        [player1, 0, 0],
+        [player2, 2, 2],
+        [player1, 0, 1],
+        [player2, 2, 1],
+        [player1, 0, 2]
+      ]
+    end
 
     let(:expected_state) { :victory }
 
@@ -76,18 +78,20 @@ RSpec.describe TicTac::Repos::GameRepo do
     end
   end
 
-  context "Draw game" do
-    let(:turns) do [
-      [player1, 0, 0],
-      [player2, 2, 2],
-      [player1, 0, 1],
-      [player2, 2, 1],
-      [player1, 2, 0],
-      [player2, 0, 2],
-      [player1, 1, 1],
-      [player2, 1, 0],
-      [player1, 1, 2]
-    ] end
+  context 'Draw game' do
+    let(:turns) do
+      [
+        [player1, 0, 0],
+        [player2, 2, 2],
+        [player1, 0, 1],
+        [player2, 2, 1],
+        [player1, 2, 0],
+        [player2, 0, 2],
+        [player1, 1, 1],
+        [player2, 1, 0],
+        [player1, 1, 2]
+      ]
+    end
 
     let(:expected_state) { :draw }
 
@@ -109,10 +113,10 @@ RSpec.describe TicTac::Repos::GameRepo do
   end
 
   def accept_json(player)
-    {player: player.public_key_link}
+    { player: player.public_key_link }
   end
 
-  def turn_json(player, posx, posy)
-    {x: posx, y: posy}
+  def turn_json(_player, posx, posy)
+    { x: posx, y: posy }
   end
 end
