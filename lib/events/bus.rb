@@ -1,13 +1,16 @@
 module Events
+  # event bus to manage events between objects
   class Bus
     def initialize
       @listeners = {}
       @listener_id = 0
     end
 
+    attr_reader :listeners
+
     def publish(event_name, *args)
-      get_listeners(event_name).each do |id, listener|
-        listener.(*args)
+      get_listeners(event_name).each do |_id, listener|
+        listener.call(*args)
       end
     end
 
@@ -26,13 +29,12 @@ module Events
 
     def get_listeners(event_name)
       @listeners[event_name] || {}
-    end 
+    end
   end
 
   Listener = Struct.new(:event_name, :callable, :id)
 
   # includables
-
   module Publisher
     attr_accessor :bus
 
@@ -41,11 +43,12 @@ module Events
     end
   end
 
+  # turn a class into an event subscriber
   module Subscriber
     attr_accessor :bus
 
     def register_events
-      @listeners ||= self.class.events.map do |event|
+      @listeners = self.class.events.map do |event|
         event_name, callable = event
         Listener.new(
           event_name,
@@ -56,7 +59,7 @@ module Events
     end
 
     def deregister_events
-      get_listeners.each do |listener|
+      listeners.each do |listener|
         bus.remove(listener.event_name, listener.id)
       end
     end
@@ -65,6 +68,7 @@ module Events
       base.extend(ClassMethods)
     end
 
+    # class methods
     module ClassMethods
       def events
         @events || []
@@ -80,7 +84,7 @@ module Events
 
     private
 
-    def get_listeners
+    def listeners
       @listeners || []
     end
   end

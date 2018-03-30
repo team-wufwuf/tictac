@@ -3,3 +3,6 @@ Metrics/BlockLength:
     - 'Rakefile'
     - '**/*.rake'
     - 'spec/**/*.rb'
+Metrics/ClassLength:
+  Exclude:
+    - '**/*.rb'

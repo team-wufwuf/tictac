@@ -113,15 +113,19 @@ module TicTac
         %(
         #{@state}
         _____
-        |#{board[0][0]}|#{board[1][0]}|#{board[2][0]}|
-        |#{board[0][1]}|#{board[1][1]}|#{board[2][1]}|
-        |#{board[0][2]}|#{board[1][2]}|#{board[2][2]}|
+        #{pp_row(board[0])}
+        #{pp_row(board[1])}
+        #{pp_row(board[2])}
         -------
         #{@current_player}
         )
       end
 
       private
+
+      def pp_row(row)
+        "|#{row[0]}|#{row[1]}|#{row[2]}|"
+      end
 
       attr_writer :board, :state, :current_player
 

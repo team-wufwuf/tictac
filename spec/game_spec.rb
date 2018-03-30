@@ -101,15 +101,19 @@ RSpec.describe TicTac::Repos::GameRepo do
   end
 
   def game_asserter(turns, expected_state)
-    block, game = subject.read_game('something')
+    block, = subject.read_game('something')
     block, game = subject.add_move_to_game(block, player2, accept_json(player2))
+    _, game = play_prepared_game(block, game, turns)
 
+    expect(game.state).to eq expected_state
+  end
+
+  def play_prepared_game(block, game, turns)
     turns.each do |turn|
       block, game = subject.add_move_to_game(block, turn[0], turn_json(*turn))
       puts game.pretty_print
     end
-
-    expect(game.state).to eq expected_state
+    [block, game]
   end
 
   def accept_json(player)

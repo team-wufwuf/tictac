@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
-gem 'openssl'
 gem 'ipfs'
+gem 'openssl'
 gem 'pry'
 gem 'pry-byebug'
 gem 'pry-stack_explorer'

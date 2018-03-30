@@ -82,7 +82,8 @@ module Ipfs
       end
 
       # cyclical blockchain causes an infinite loop.
-      raise(ChainError, 'CYCLICAL BLOCKCHAIN') if addresses.key? chain.last.ipfs_addr
+      last_addr = chain.last.ipfs_addr
+      raise(ChainError, 'CYCLICAL BLOCKCHAIN') if addresses.key? last_addr
     end
 
     def self.from_data(id, last_block, data)
