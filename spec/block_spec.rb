@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'appendlog'
+require 'ipfs/block'
 
-RSpec.describe TicTac::Block do
-  let(:id) { TicTac::Identity.new("foo") }
+RSpec.describe Ipfs::Block do
+  let(:id) { Ipfs::Identity.new("foo") }
   let(:subject) { described_class.from_data(id,nil,{'hello': 'world'}) }
 
   it "is signed" do

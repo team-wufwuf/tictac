@@ -1,7 +1,4 @@
-require_relative '../appendlog.rb'
-require_relative '../models/tic_tac_toe_game.rb'
-require_relative '../identity.rb'
-
+require_relative '../models/tic_tac_toe_game'
 module TicTac
   module Repos
     User = Struct.new(:name, :pub_key)
@@ -12,7 +9,7 @@ module TicTac
     class GameRepo
 
       class << self
-        attr_accessor :block_adapter
+        attr_accessor :block_adapter, :publisher
       end
 
       # later this will be generated through introspection, so use the snakecase
@@ -27,9 +24,11 @@ module TicTac
       def self.add_move_to_game(block, identity, move)
         game = block_to_game(block)
 
-        game.move(identity.public_key, move)
+        game.move(identity.public_key_link, move)
 
         new_block = block.append(identity, move)
+
+        publisher.publish(new_block.ipfs_addr)
 
         [new_block, game]
       end
@@ -42,11 +41,12 @@ module TicTac
         initblock = chain.first
 
         signer = initblock.signer
-        rules  = initblock.data[:rules]
+
+        rules = initblock.data[:rules]
 
         game = GameLookup[rules[:game]].new_game(initblock.data).tap do |g|
           chain[1..-1].each do |b|
-            g.move(b.signer.public_key, b.data)
+            g.move(b.signer, b.data)
           end
         end
       end

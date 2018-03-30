@@ -1,1 +1,1 @@
-require_relative 'repos/user'
+require_relative 'repos/game'

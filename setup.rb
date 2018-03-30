@@ -1,7 +1,7 @@
-require_relative 'lib/identity'
+require_relative 'lib/ipfs/identity'
 
 begin
-  TicTac::Identity.new.setup(ARGV[0])
+  Ipfs::Identity.new.setup(ARGV[0])
 rescue StandardError => e
   STDERR.puts e.message
   e.backtrace.each do |bt|
