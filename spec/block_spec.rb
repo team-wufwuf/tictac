@@ -2,7 +2,10 @@ require 'spec_helper'
 require 'ipfs/block'
 
 RSpec.describe Ipfs::Block do
-  let(:id) { Ipfs::Identity.new('foo') }
+  let(:tmp_dir)  { ENV['TICTAC_TEST_DIR'] || File.join(__dir__, 'tmp') }
+  let(:cfg)      { Ipfs::Config.new(tmp_dir) }
+
+  let(:id) { Ipfs::Identity.new('foo', cfg) }
   let(:subject) { described_class.from_data(id, nil, 'hello' => 'world') }
 
   it 'is signed' do
