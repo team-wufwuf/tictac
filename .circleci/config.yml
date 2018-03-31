@@ -52,10 +52,10 @@ jobs:
         command: |
           sudo apt-get update
           sudo apt-get install software-properties-common
-          sudo add-apt-repository ppa:ubuntu-lxc/lxd-stable
+          sudo add-apt-repository ppa:gophers/archive
           sudo apt-get update
           sudo apt-get -y upgrade
-          sudo apt-get install golang
+          sudo apt-get install golang-1.10-go
 
      # install ipfs_keys_export
      - run:
