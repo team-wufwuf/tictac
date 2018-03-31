@@ -6,3 +6,9 @@ Metrics/BlockLength:
 Metrics/ClassLength:
   Exclude:
     - '**/*.rb'
+Metrics/LineLength:
+  Exclude:
+    - 'bin/**/*.rb'
+Metrics/MethodLength:
+  Exclude:
+    - 'bin/**/*.rb'
