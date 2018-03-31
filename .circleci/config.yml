@@ -51,6 +51,8 @@ jobs:
         name: install golang
         command: |
           sudo apt-get install golang-go
+          mkdir ~/gohaus
+          export GOPATH=$HOME/gohaus
 
      # install ipfs_keys_export
      - run:
