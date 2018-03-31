@@ -50,13 +50,10 @@ jobs:
      - run:
         name: install golang
         command: |
-          sudo curl -O https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz
-          sudo tar -xvf go1.9.1.linux-amd64.tar.gz
-          sudo mv go /usr/local
-          mkdir $HOME/gohaus
-          export GOROOT=$HOME/go
-          export PATH=$PATH:/usr/local/go/bin:$GOROOT/bin
-          export GOPATH=$HOME/gohaus
+          sudo add-apt-repository ppa:ubuntu-lxc/lxd-stable
+          sudo apt-get update
+          sudo apt-get -y upgrade
+          sudo apt-get install golang
 
      # install ipfs_keys_export
      - run:
