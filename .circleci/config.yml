@@ -56,7 +56,6 @@ jobs:
         command: |
           go get github.com/ipfs/ipfs-update
           ipfs-update install latest
-          mkdir ~/.ipfs
           mkdir ~/.ipfs/keystore
           ipfs version
 
