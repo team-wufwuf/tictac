@@ -42,7 +42,7 @@ jobs:
         command: |
           wget -q https://raw.githubusercontent.com/ipfs/install-go-ipfs/master/install-ipfs.sh
           chmod +x install-ipfs.sh
-          ./install-ipfs.sh
+          sudo ./install-ipfs.sh
 
      # run linter  
      - run: rubocop
