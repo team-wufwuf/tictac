@@ -46,6 +46,7 @@ jobs:
           touch $BASH_ENV
           echo 'export GOPATH=$HOME/go' >> $BASH_ENV
           echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+          go version
 
      # install ipfs
      - run:
