@@ -56,6 +56,7 @@ jobs:
           sudo apt-get install golang-go
           mkdir ~/gohaus
           export GOPATH=$HOME/go
+          touch $BASH_ENV
           echo 'export GOPATH=$HOME/go' >> $BASH_ENV
           echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV 
 
