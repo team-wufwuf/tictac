@@ -55,7 +55,7 @@ jobs:
           sudo mv go /usr/local
           mkdir $HOME/gohaus
           export GOROOT=$HOME/go
-          export PATH=$PATH:$GOROOT/bin
+          export PATH=$PATH:/usr/local/go/bin:$GOROOT/bin
           export GOPATH=$HOME/gohaus
 
      # install ipfs_keys_export
