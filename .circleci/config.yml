@@ -57,6 +57,7 @@ jobs:
           go get github.com/ipfs/ipfs-update
           ipfs-update install latest
           mkdir ~/.ipfs/keystore
+          ipfs init
           ipfs version
 
      # install ipfs_keys_export
