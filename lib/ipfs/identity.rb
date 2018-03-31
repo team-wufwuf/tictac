@@ -47,7 +47,7 @@ module Ipfs
         raise StandardError, "can't find #{privkey_ipfs_dir}"
       end
 
-      `ipfs key gen -t=rsa -s=4096 #{name}`
+      `ipfs key gen -t=rsa -s=4096 #{name}` unless File.exist?(privkey_ipfs_path)
 
       pubkey = `ipfs key list -l | grep #{name}`.split(' ').first
 

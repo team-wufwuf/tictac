@@ -43,8 +43,7 @@ jobs:
           wget -q https://raw.githubusercontent.com/ipfs/install-go-ipfs/master/install-ipfs.sh
           chmod +x install-ipfs.sh
           sudo ./install-ipfs.sh
-          mkdir ~/.ipfs
-          mkdir ~/.ipfs/keystore
+          ipfs version
 
      # install golang
      - run:
