@@ -67,8 +67,8 @@ RSpec.describe Ipfs::Identity do
   after(:all) do
     unless @external_ipfs
       Process.kill('KILL', @ipfs_proc[3].pid)
-      #sleep 1
-      #Process.kill('KILL', @ipfs_proc[3].pid + 1)
+      # sleep 1
+      # Process.kill('KILL', @ipfs_proc[3].pid + 1)
     end
   end
 
