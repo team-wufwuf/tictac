@@ -40,6 +40,7 @@ jobs:
      - run:
         name: install golang
         command: |
+          sudo apt-get install software-properties-common
           sudo add-apt-repository ppa:gophers/archive
           sudo apt update
           sudo apt-get install golang-1.9-go
