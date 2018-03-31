@@ -16,9 +16,6 @@ jobs:
 
    working_directory: ~/repo
 
-   environment:
-     BASH_ENV: ~/.bashrc
-
    steps:
      - checkout
 
