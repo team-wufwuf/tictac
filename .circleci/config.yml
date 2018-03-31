@@ -58,6 +58,7 @@ jobs:
           ipfs-update install latest
           mkdir ~/.ipfs/keystore
           ipfs init
+          ipfs repo fsck
           ipfs version
 
      # install ipfs_keys_export
