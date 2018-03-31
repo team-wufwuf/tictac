@@ -50,6 +50,8 @@ jobs:
      - run:
         name: install golang
         command: |
+          sudo apt-get update
+          sudo apt-get install software-properties-common
           sudo add-apt-repository ppa:ubuntu-lxc/lxd-stable
           sudo apt-get update
           sudo apt-get -y upgrade
