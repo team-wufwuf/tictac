@@ -17,7 +17,7 @@ jobs:
    working_directory: ~/repo
 
    environment:
-     GOPATH: $HOME/gohaus
+     GOPATH: /gohaus
 
    steps:
      - checkout
@@ -54,7 +54,7 @@ jobs:
         name: install golang
         command: |
           sudo apt-get install golang-go
-          mkdir ~/gohaus
+          mkdir /gohaus
 
      # install ipfs_keys_export
      - run:
