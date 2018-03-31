@@ -36,6 +36,14 @@ jobs:
            - ./vendor/bundle
          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
 
+     # install ipfs
+     - run:
+        name: install ipfs
+        command: |
+          wget -q https://raw.githubusercontent.com/ipfs/install-go-ipfs/master/install-ipfs.sh
+          chmod +x install-ipfs.sh
+          ./install-ipfs.sh
+
      # run linter  
      - run: rubocop
 
