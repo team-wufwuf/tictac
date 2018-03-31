@@ -40,17 +40,21 @@ module Ipfs
       end
     end
 
-    def self.import_or_create_privkey_from_keystore(name = 'self')
-      privkey_ipfs_path = File.join(privkey_ipfs_dir, name)
-
+    def self.generate_key(name)
       unless File.exist?(privkey_ipfs_dir)
         raise StandardError, "can't find #{privkey_ipfs_dir}"
       end
 
-      `ipfs key gen -t=rsa -s=4096 #{name}` unless File.exist?(privkey_ipfs_path)
+      path = File.join(privkey_ipfs_dir, name)
+      `ipfs key gen -t=rsa -s=4096 #{name}` unless File.exist?(path)
+    end
+
+    def self.import_or_create_privkey_from_keystore(name = 'self')
+      generate_key(name)
 
       pubkey = `ipfs key list -l | grep #{name}`.split(' ').first
 
+      privkey_ipfs_path = File.join(privkey_ipfs_dir, name)
       privkey_ipfs = Base64.strict_encode64(File.read(privkey_ipfs_path))
 
       private_key = `echo #{privkey_ipfs} | ipfs_keys_export`
