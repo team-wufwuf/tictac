@@ -40,7 +40,9 @@ jobs:
      - run:
         name: install golang
         command: |
-          sudo apt-get install golang-go
+          sudo add-apt-repository ppa:gophers/archive
+          sudo apt update
+          sudo apt-get install golang-1.9-go
           mkdir ~/gohaus
           export GOPATH=$HOME/go
           touch $BASH_ENV
