@@ -36,15 +36,6 @@ jobs:
            - ./vendor/bundle
          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
 
-     # install ipfs
-     - run:
-        name: install ipfs
-        command: |
-          wget -q https://raw.githubusercontent.com/ipfs/install-go-ipfs/master/install-ipfs.sh
-          chmod +x install-ipfs.sh
-          sudo ./install-ipfs.sh
-          ipfs version
-
      # install golang
      - run:
         name: install golang
@@ -54,7 +45,17 @@ jobs:
           export GOPATH=$HOME/go
           touch $BASH_ENV
           echo 'export GOPATH=$HOME/go' >> $BASH_ENV
-          echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV 
+          echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+
+     # install ipfs
+     - run:
+        name: install ipfs
+        command: |
+          go get -u github.com/ipfs/ipfs-update
+          ipfs-update install latest
+          mkdir ~/.ipfs
+          mkdir ~/.ipfs/keystore
+          ipfs version
 
      # install ipfs_keys_export
      - run:
