@@ -1,20 +1,19 @@
-# coding: utf-8
 require 'fileutils'
 require 'openssl'
 
+# IPFS adapter
 module Ipfs
-  IPFS_PATH=ENV['IPFS_PATH'] ? ENV['IPFS_PATH'] : File.absolute_path("#{ENV['HOME']}/.ipfs")
+  IPFS_PATH = ENV['IPFS_PATH'] || File.absolute_path("#{ENV['HOME']}/.ipfs")
 
+  # IPFS application configuration
   class Config
-    def initialize(ipfs_path=IPFS_PATH)
-      @ipfs_path=ipfs_path
-      if !File.exist?("#{@ipfs_path}/config")
-        %x(ipfs -c #{@ipfs_path} init)
-      end
+    def initialize(ipfs_path = IPFS_PATH)
+      @ipfs_path = ipfs_path
+      `ipfs -c #{@ipfs_path} init` unless File.exist?("#{@ipfs_path}/config")
     end
 
     def setup
-      private_key = Identity.import_or_create_privkey_from_keystore("self")
+      Identity.import_or_create_privkey_from_keystore('self')
     end
 
     attr_reader :ipfs_path
@@ -28,7 +27,7 @@ module Ipfs
     end
 
     def tictac_dir
-      return "#{ipfs_path}/tictac"
+      "#{ipfs_path}/tictac"
     end
 
     def pub_path
@@ -48,4 +47,3 @@ module Ipfs
     Config.new
   end
 end
-

@@ -1,0 +1,14 @@
+Metrics/BlockLength:
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'spec/**/*.rb'
+Metrics/ClassLength:
+  Exclude:
+    - '**/*.rb'
+Metrics/LineLength:
+  Exclude:
+    - 'bin/**/*.rb'
+Metrics/MethodLength:
+  Exclude:
+    - 'bin/**/*.rb'

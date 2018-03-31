@@ -1,8 +1,90 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-ruby/ for more details
+#
 version: 2
 jobs:
-  build: machine
-  steps:
-    - checkout
-    - run:
-      name: 'Run unit tests'
-      command: bundle exec rspec
+ build:
+   docker:
+     # specify the version you desire here
+      - image: circleci/ruby:2.4.1-node-browsers
+     
+     # Specify service dependencies here if necessary
+     # CircleCI maintains a library of pre-built images
+     # documented at https://circleci.com/docs/2.0/circleci-images/
+     # - image: circleci/postgres:9.4
+
+   working_directory: ~/repo
+
+   steps:
+     - checkout
+
+     # Download and cache dependencies
+     - restore_cache:
+         keys:
+         - v1-dependencies-{{ checksum "Gemfile.lock" }}
+         # fallback to using the latest cache if no exact match is found
+         - v1-dependencies-
+
+     - run:
+         name: install dependencies
+         command: |
+           bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+     - save_cache:
+         paths:
+           - ./vendor/bundle
+         key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+
+     # install golang
+     - run:
+        name: install golang
+        command: |
+          sudo curl -O https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz
+          sudo tar -xvf go1.9.1.linux-amd64.tar.gz
+          sudo mv go /usr/local
+          mkdir ~/gohaus
+          export GOPATH=$HOME/go
+          export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH >> $BASH_ENV
+          echo 'export GOPATH=$HOME/go' >> $BASH_ENV
+          echo 'export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH' >> $BASH_ENV
+          go version
+
+     # install ipfs
+     - run:
+        name: install ipfs
+        command: |
+          go get github.com/ipfs/ipfs-update
+          ipfs-update install latest
+          mkdir ~/.ipfs/keystore
+          ipfs init
+          ipfs version
+
+     # install ipfs_keys_export
+     - run:
+        name: ipfs_keys_export
+        command: |
+          go get github.com/tswindell/ipfs_keys_export
+
+     # run linter  
+     - run: rubocop
+
+     # run tests!
+     - run:
+         name: run tests
+         command: |
+           ipfs daemon --enable-pubsub-experiment > /dev/null &
+           mkdir /tmp/test-results
+           TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)"
+           
+           bundle exec rspec --format progress \
+                           --out /tmp/test-results/rspec.log \
+                           --format progress \
+                           $TEST_FILES
+
+     # collect reports
+     - store_test_results:
+         path: /tmp/test-results
+     - store_artifacts:
+         path: /tmp/test-results
+         destination: test-results

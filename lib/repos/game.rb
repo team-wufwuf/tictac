@@ -6,15 +6,15 @@ module TicTac
     class GameError < StandardError
     end
 
+    # provides CRUD for tic tac toe games
     class GameRepo
-
       class << self
         attr_accessor :block_adapter, :publisher
       end
 
       # later this will be generated through introspection, so use the snakecase
       #   version of the game name
-      GameLookup = {"tic_tac_game" => TicTac::Models::TicTacGame}
+      GAME_LOOKUP = { 'tic_tac_game' => TicTac::Models::TicTacGame }.freeze
 
       def self.read_game(ipfs_addr)
         block = block_adapter.new(ipfs_addr)
@@ -33,18 +33,14 @@ module TicTac
         [new_block, game]
       end
 
-      private
-
       def self.block_to_game(block)
         chain = block.get_chain
 
         initblock = chain.first
 
-        signer = initblock.signer
-
         rules = initblock.data[:rules]
 
-        game = GameLookup[rules[:game]].new_game(initblock.data).tap do |g|
+        GAME_LOOKUP[rules[:game]].new_game(initblock.data).tap do |g|
           chain[1..-1].each do |b|
             g.move(b.signer, b.data)
           end
