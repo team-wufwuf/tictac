@@ -14,9 +14,10 @@ describe 'pubsub' do
 
   let(:player1) { Ipfs::Identity.new('joe',  cfg) }
   let(:player2) { Ipfs::Identity.new('jane', cfg) }
-  
+
   let!(:channel) { SecureRandom.hex }
   let!(:publisher) { Ipfs::Publisher.new(channel) }
+  let!(:listener) { Ipfs::Listener.new(channel) }
   let(:first_turn) do
     {
       rules: {
@@ -35,37 +36,28 @@ describe 'pubsub' do
     TicTac::Repos::GameRepo.block_adapter = Ipfs::Block
     TicTac::Repos::GameRepo.publisher     = publisher
     Thread.abort_on_exception = true
-
     Thread.new do
-      PTY.spawn "ipfs pubsub sub #{channel}" do |stdout, _stdin, _pid|
-        stdout.each do |line|
-          block, game = TicTac::Repos::GameRepo.read_game(line)
-          self.game = game
-          self.current_block = block
-        end
+      listener.listen do |event|
+        block, game = TicTac::Repos::GameRepo.read_game(event)
+        self.game = game
+        self.current_block = block
       end
     end
-
-    sleep 5.0
   end
 
   it 'can actually read data' do
     block = Ipfs::Block.from_data(player1, nil, first_turn)
     publisher.publish(block.ipfs_addr)
-    sleep 5.5
+    sleep 2.0
     expect(game.state).to eq :pending
   end
 
   it 'can actually read data' do
     block = Ipfs::Block.from_data(player1, nil, first_turn)
     publisher.publish(block.ipfs_addr)
-
-    sleep 5.5
-
+    sleep 5.0
     TicTac::Repos::GameRepo.add_move_to_game(current_block, player2, {})
-
-    sleep 5.5
-
+    sleep 5.0
     expect(game.state).to eq :accepted
   end
 end
