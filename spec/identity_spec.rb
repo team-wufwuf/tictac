@@ -53,6 +53,7 @@ RSpec.describe Ipfs::Identity do
     end
 
     unless @external_ipfs
+      `ipfs repo fsck`
       @ipfs_proc = Open3.popen3("ipfs -c #{@tmp_dir} daemon 2>&1")
       Timeout.timeout(20) do
         Kernel.loop do
