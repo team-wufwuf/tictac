@@ -41,7 +41,6 @@ RSpec.describe Ipfs::Identity do
     File.write("#{@tmp_dir}/config", JSON.dump(config_file))
   end
 
-
   it 'generates the files' do
     Ipfs::Identity.new('self', @cfg)
     expect(File.exist?(File.join(tmp_dir, 'tictac', 'self.pem'))).to be true
