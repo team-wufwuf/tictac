@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'pty'
 require 'securerandom'
-
+require 'ipfs/pubsub'
 require 'ipfs/block'
 require 'ipfs/config'
 require 'ipfs/identity'
@@ -14,9 +14,9 @@ describe 'pubsub' do
 
   let(:player1) { Ipfs::Identity.new('joe',  cfg) }
   let(:player2) { Ipfs::Identity.new('jane', cfg) }
-
-  let(:channel) { SecureRandom.hex }
-
+  
+  let!(:channel) { SecureRandom.hex }
+  let!(:publisher) { Ipfs::Publisher.new(channel) }
   let(:first_turn) do
     {
       rules: {
@@ -29,29 +29,11 @@ describe 'pubsub' do
     }
   end
 
-  def publish_first_turn
-    block = Ipfs::Block.from_data(player1, nil, first_turn)
-    Publisher.publish(block.ipfs_addr)
-  end
-
   attr_accessor :current_block, :game
-
-  module Publisher
-    class << self
-      attr_accessor :channel
-
-      def publish(addr)
-        `ipfs pubsub pub #{channel} #{addr} '\n'`
-      end
-    end
-  end
 
   before(:each) do
     TicTac::Repos::GameRepo.block_adapter = Ipfs::Block
-    TicTac::Repos::GameRepo.publisher     = Publisher
-
-    Publisher.channel = channel
-
+    TicTac::Repos::GameRepo.publisher     = publisher
     Thread.abort_on_exception = true
 
     Thread.new do
@@ -64,24 +46,25 @@ describe 'pubsub' do
       end
     end
 
-    sleep 0.5
+    sleep 5.0
   end
 
   it 'can actually read data' do
-    publish_first_turn
-
-    sleep 0.5
+    block = Ipfs::Block.from_data(player1, nil, first_turn)
+    publisher.publish(block.ipfs_addr)
+    sleep 5.5
     expect(game.state).to eq :pending
   end
 
   it 'can actually read data' do
-    publish_first_turn
+    block = Ipfs::Block.from_data(player1, nil, first_turn)
+    publisher.publish(block.ipfs_addr)
 
-    sleep 0.5
+    sleep 5.5
 
     TicTac::Repos::GameRepo.add_move_to_game(current_block, player2, {})
 
-    sleep 0.5
+    sleep 5.5
 
     expect(game.state).to eq :accepted
   end
