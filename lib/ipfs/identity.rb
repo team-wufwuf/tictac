@@ -66,8 +66,8 @@ module Ipfs
       if !File.directory?(cfg.tictac_dir)
         STDERR.puts "CREATE\tTICTAC_DIR\t\t#{cfg.tictac_dir}"
         FileUtils.mkdir_p(cfg.tictac_dir)
-      else
-        STDERR.puts "EXISTS\t\TICTAC_DIR\t\t#{cfg.tictac_dir}"
+#      else
+#        STDERR.puts "EXISTS\t\TICTAC_DIR\t\t#{cfg.tictac_dir}"
       end
     end
 
@@ -119,7 +119,7 @@ module Ipfs
         generate_pkey_openssl_ipfsaddr(pubkey_ipfs, pkey_obj)
       )
 
-      STDERR.puts "IMPORTED\t#{keyname}"
+#      STDERR.puts "IMPORTED\t#{keyname}"
     end
 
     def private_path
