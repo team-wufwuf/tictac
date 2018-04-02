@@ -1,3 +1,10 @@
+PATH
+  remote: .
+  specs:
+    tictac (0.1)
+      ipfs
+      openssl
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -70,13 +77,12 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  ipfs
-  openssl
   pry
   pry-byebug
   pry-stack_explorer
   rspec (~> 3.0)
   rubocop (~> 0.54)
+  tictac!
 
 BUNDLED WITH
    1.11.2
