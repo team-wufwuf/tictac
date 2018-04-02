@@ -75,6 +75,7 @@ jobs:
          name: run tests
          command: |
            ipfs daemon --enable-pubsub-experiment > /dev/null &
+           sleep 10
            mkdir /tmp/test-results
            TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)"
            
