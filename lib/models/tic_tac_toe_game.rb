@@ -35,9 +35,6 @@ module TicTac
       path.map { |i| LOOKUP_INDEX[i] }
     end.freeze
 
-    def self.name
-      'tic-tac-toe'
-    end
 
     # board state nxn array of integers. 0 neutral. 1 crosses. -1 circles.
     # board status 'pending' 'in_play' 'crosses' (win) 'circles' (win) 'draw'
@@ -52,7 +49,9 @@ module TicTac
 
         initial_setup(args)
       end
-
+      def self.name
+        'tic-tac-toe'
+      end
       def self.new_game(args)
         [
           [:board, 'New game on non-new board'],

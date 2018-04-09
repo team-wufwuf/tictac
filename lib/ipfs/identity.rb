@@ -31,7 +31,12 @@ module Ipfs
     end
 
     attr_reader :keyname
-
+    def to_s
+      public_key_link
+    end
+    def to_sym
+      public_key_link.to_sym
+    end
     def self.privkey_ipfs_dir
       @privkey_ipfs_dir ||= begin
         default_ipfs_dir = "#{ENV['HOME']}/.ipfs"

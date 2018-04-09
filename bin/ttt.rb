@@ -1,11 +1,12 @@
 require 'optparse'
 require_relative '../lib/repos/game'
-
+require_relative '../lib/ipfs/identity'
+require_relative '../lib/ipfs/block'
+require_relative '../lib/ipfs/pubsub'
 if $PROGRAM_NAME == __FILE__
   games = { 'tic-tac-toe' => TicTac::Models::TicTacGame }
 
   o = { game_class: games['tic-tac-toe'], data: nil, chain: nil, identity: 'self' }
-
   parser = OptionParser.new do |opts|
     opts.banner = 'Usage: game.rb [-g game_link] [-m move_data] [-o opponent] [-c game_class]'
     opts.on('-c', '--game-class', 'Only Tic Tac Toe works right now!') do |x|
@@ -32,23 +33,35 @@ if $PROGRAM_NAME == __FILE__
       o[:identity] = x
     end
   end
-
   parser.parse!
-  id = TicTac::Identity.new(o[:identity])
+  TicTac::Repos::GameRepo.block_adapter = Ipfs::Block
 
-  if o[:opponent]
-    game = TicTac::Repos::GamePlayer.create(id, o[:opponent], o[:game_class])
-    STDERR.puts game.pretty_print
-    puts game.ipfs_addr
+  id = Ipfs::Identity.new(o[:identity]) unless !o[:identity]
+  TicTac::Repos::GameRepo.publisher = Ipfs::Publisher.new(id.public_key_link)
+  #TODO: distinguish between keynames and key links
+  opponent = Ipfs::Identity.new(o[:opponent]) unless !o[:opponent]
+
+  #start a new game
+  if o[:opponent] && o[:identity]
+
+    print o[:game_class].name
+    game = {rules: {game: o[:game_class].name,players: {id.public_key_link.to_sym => {player: 1},
+                                                        opponent.public_key_link.to_sym => {player: 2}}}}
+    STDERR.puts TicTac::Repos::GameRepo.new_game(game).pretty_print
+    block=Ipfs::Block.from_data(id,nil,game)
+    puts block.ipfs_addr
+
+  #make a move in an existing game
   elsif o[:move] && o[:game]
-    game = TicTac::Repos::GamePlayer.new(o[:game])
-    new_game = game.move(id, o[:move])
-    STDERR.puts new_game.pretty_print
-    puts new_game.ipfs_addr
+    block,game = TicTac::Repos::GameRepo.read_game(o[:game])
+    new_block,game = TicTac::Repos::GameRepo.add_move_to_game(block,id,o[:move])
+    puts game.pretty_print
+    puts new_block.ipfs_addr
+  #view an existing game
   elsif o[:game]
-    game = TicTac::Repos::GamePlayer.new(o[:game])
+    block,game = TicTac::Repos::GameRepo.read_game(o[:game])
     STDERR.puts game.pretty_print
-    puts game.ipfs_addr
+    puts block.ipfs_addr
   else
     puts parser.banner
   end
