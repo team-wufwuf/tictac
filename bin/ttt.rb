@@ -44,11 +44,11 @@ if $PROGRAM_NAME == __FILE__
   #start a new game
   if o[:opponent] && o[:identity]
 
-    print o[:game_class].name
     game = {rules: {game: o[:game_class].name,players: {id.public_key_link.to_sym => {player: 1},
                                                         opponent.public_key_link.to_sym => {player: 2}}}}
-    STDERR.puts TicTac::Repos::GameRepo.new_game(game).pretty_print
     block=Ipfs::Block.from_data(id,nil,game)
+    block,game = TicTac::Repos::GameRepo.read_game(block.ipfs_addr)
+    STDERR.puts game.pretty_print
     puts block.ipfs_addr
 
   #make a move in an existing game

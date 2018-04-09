@@ -40,7 +40,6 @@ module TicTac
         chain = block.get_chain
 
         initblock = chain.first
-        puts initblock.data
         rules = initblock.data[:rules]
 
         GAME_LOOKUP[rules[:game]].new_game(initblock.data).tap do |g|
