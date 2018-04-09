@@ -21,7 +21,7 @@ describe 'pubsub' do
   let(:first_turn) do
     {
       rules: {
-        game: 'tic_tac_game',
+        game: 'tic-tac-toe',
         players: {
           player1.public_key_link => { player: 1 },
           player2.public_key_link => { player: 2 }

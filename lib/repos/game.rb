@@ -14,7 +14,7 @@ module TicTac
 
       # later this will be generated through introspection, so use the snakecase
       #   version of the game name
-      GAME_LOOKUP = { 'tic_tac_game' => TicTac::Models::TicTacGame }.freeze
+      GAME_LOOKUP = { 'tic-tac-toe' => TicTac::Models::TicTacGame }.freeze
 
       def self.read_game(ipfs_addr)
         block = block_adapter.new(ipfs_addr)
