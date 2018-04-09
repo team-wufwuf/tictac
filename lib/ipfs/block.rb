@@ -169,7 +169,6 @@ if $PROGRAM_NAME == __FILE__
   end
 
   if o[:init]
-    puts game
     exit 0
   end
 

@@ -11,16 +11,19 @@ module TicTac
       class << self
         attr_accessor :block_adapter, :publisher
       end
-
+      
       # later this will be generated through introspection, so use the snakecase
       #   version of the game name
-      GAME_LOOKUP = { 'tic_tac_game' => TicTac::Models::TicTacGame }.freeze
+      GAME_LOOKUP = { "tic-tac-toe" => TicTac::Models::TicTacGame }.freeze
 
       def self.read_game(ipfs_addr)
         block = block_adapter.new(ipfs_addr)
         [block, block_to_game(block)]
       end
-
+      def self.new_game(rules)
+        game=GAME_LOOKUP[rules[:rules][:game]]
+        game.new_game(rules)
+      end
       def self.add_move_to_game(block, identity, move)
         game = block_to_game(block)
 
@@ -37,7 +40,6 @@ module TicTac
         chain = block.get_chain
 
         initblock = chain.first
-
         rules = initblock.data[:rules]
 
         GAME_LOOKUP[rules[:game]].new_game(initblock.data).tap do |g|
